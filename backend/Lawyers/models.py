@@ -64,13 +64,30 @@ class Category(models.Model):
 
 class Testimonial(models.Model):
     lawyer = models.ForeignKey(Lawyer, on_delete=models.CASCADE)
-    email = models.CharField(max_length=100)
+    email = models.EmailField()
     name = models.CharField(max_length=100)
+    title = models.CharField(max_length=100)
     company = models.CharField(max_length=200, null=True, blank=True)
     role = models.CharField(max_length=100, blank=True, null=True)
-    testimony = models.TextField()
+    testimony = models.TextField(blank=True, null=True)
     date_created = models.DateField(auto_now_add=True)
+    replied = models.BooleanField(default=False)
     
     def __str__(self):
         return self.name
+    
+
+class Bookings(models.Model):
+    lawyer = models.ForeignKey(Lawyer, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    work_at = models.CharField(null=True, blank=True, max_length=100)
+    location = models.CharField(max_length=100)
+    booking_date = models.DateField()
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.name
+    
     

@@ -119,8 +119,8 @@ function OtherInfoForm({ setLoading, handleNext, error, setError }) {
   ];
   return (
     <Paper
-      variant="outlined"
-      elevation={0}
+      variant="elevation"
+      elevation={3}
       sx={{ p: 2, width: small ? "100%" : null }}
     >
       <form

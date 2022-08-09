@@ -8,11 +8,12 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import { Container } from "@mui/material";
 import OtherInfoForm from "../components/auth/other-info-form";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SaveIcon from "@mui/icons-material/Save";
+import Category from "../components/auth/category";
 
-const steps = ["Personal Information", "Create an ad group", "Create an ad"];
+const steps = ["Personal Information", "Other personal info", "Type of Lawyer"];
 
 const formIds = ["first", "second", "third"];
 
@@ -89,13 +90,34 @@ export default function Register() {
       error={error}
       handleNext={handleNext}
     />,
-    <RegisterForm />,
+    <Category
+      setLoading={setLoading}
+      setError={setError}
+      error={error}
+      handleNext={handleNext}
+    />,
   ];
   return (
     <Container maxWidth="md">
-      <Typography variant="h4" my={2}>
-        Create an Account
-      </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Typography variant="h4" my={2}>
+          Create an Account
+        </Typography>
+        <Typography
+          component={Link}
+          to="/auth/login"
+          color={"GrayText"}
+          variant="caption"
+        >
+          Log into your account
+        </Typography>
+      </Box>
       <Stepper activeStep={activeStep}>
         {steps.map((label, index) => {
           const stepProps = {};
@@ -168,14 +190,9 @@ export default function Register() {
                 ml: "auto",
               }}
               form={formIds[activeStep]}
-
-              // disabled={Object.entries(formik.errors).length > 0 ? true : false}
-              // fullWidth
             >
               {activeStep === steps.length - 1 ? "Finish" : "Next"}
             </LoadingButton>
-            {/* <Button onClick={handleNext} type="submit" form="first">
-            </Button> */}
           </Box>
         </React.Fragment>
       )}

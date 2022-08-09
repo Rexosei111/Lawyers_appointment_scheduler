@@ -1,10 +1,12 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useFormik } from "formik";
 import axios from "axios";
 import {
   Box,
+  Button,
   Container,
   InputAdornment,
+  MenuItem,
   Paper,
   TextField,
   Typography,
@@ -18,14 +20,15 @@ import LocalLibraryOutlinedIcon from "@mui/icons-material/LocalLibraryOutlined";
 import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SaveIcon from "@mui/icons-material/Save";
-import { API } from "../../lib/Axios_init";
+import { API, axiosConfig, uploadAPI } from "../../lib/Axios_init";
 import { useLocalStorage } from "../../hooks/storage";
+import { Navigate, useNavigate } from "react-router-dom";
 
 const initialValues = {
-  first_name: "",
-  last_name: "",
   email: "",
-  password: "",
+  name: "",
+  company: "",
+  title: "",
 };
 
 const validate = (values) => {
@@ -33,28 +36,33 @@ const validate = (values) => {
 
   if (!values.email) {
     errors.email = "Required Field";
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
-    errors.email = "Invalid Email Format";
   }
-  if (!values.first_name) {
-    errors.first_name = "Required Field";
+
+  if (!values.name) {
+    errors.name = "Required Field";
   }
-  if (!values.last_name) {
-    errors.last_name = "Required Field";
+  if (!values.title) {
+    errors.title = "Required Field";
   }
-  if (!values.password) {
-    errors.password = "Required Field";
+  if (!values.company) {
+    errors.company = "Required Field";
   }
+
   return errors;
 };
 
-function RegisterForm({ setLoading, error, setError, handleNext }) {
-  // const [loading, setLoading] = useState(false);
-  // const [error, setError] = useState(false);
+function TestimonialForm({ setTestimonial, handleClose }) {
+  const [formloading, setFormLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState({});
   const [success, setSuccess] = useState(null);
   const large = useMediaQuery("(max-width:900px)");
   const formRef = useRef();
+  const [File, setFile] = useState(null);
+  const [Link, setLink] = useState("");
+  const [progress, setProgress] = useState(null);
+  const [loading, setFileLoading] = useState(false);
+  const navigate = useNavigate();
 
   const [token, setToken] = useLocalStorage("token", null);
 
@@ -62,24 +70,37 @@ function RegisterForm({ setLoading, error, setError, handleNext }) {
   const formik = useFormik({
     initialValues,
     onSubmit: async (values) => {
-      setLoading(true);
+      setFormLoading(true);
+      setError(false);
       try {
-        const { data } = await API.post("auth/register", values);
-        setToken(data);
-        setLoading(false);
+        const { data } = await API.post(
+          "lawyers/me/testimonials",
+          { ...values },
+          {
+            headers: {
+              Authorization: `Bearer ${token.access}`,
+            },
+          }
+        );
+        setFormLoading(false);
+        setTestimonial((prevState) => [...prevState, { ...data }]);
         setSuccess(true);
         setError(false);
-        handleNext();
+        formik.values = initialValues;
+        setFile(null);
+        setLink(null);
+        handleClose(false);
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response) {
+        if (axios.isAxiosError(error)) {
+          if (error.response.status === 401) navigate("/auth/login");
           setErrorMessage((prevState) => ({
             ...prevState,
             ...error.response.data,
           }));
+          setFormLoading(false);
+          setSuccess(false);
+          setError(true);
         }
-        setLoading(false);
-        setSuccess(false);
-        setError(true);
       }
     },
     validate,
@@ -91,10 +112,18 @@ function RegisterForm({ setLoading, error, setError, handleNext }) {
       elevation={3}
       sx={{ p: small ? 2 : 4, width: small ? "100%" : null }}
     >
+      <Typography
+        variant="h4"
+        mb={3}
+        textAlign={"center"}
+        sx={{ textTransform: "uppercase" }}
+      >
+        Request A Testimonial
+      </Typography>
       <form
         action="#"
         method="POST"
-        id="first"
+        id="testimonial"
         style={{
           display: "flex",
           flexDirection: "column",
@@ -107,89 +136,6 @@ function RegisterForm({ setLoading, error, setError, handleNext }) {
         <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
           <TextField
             error={
-              (formik.touched.first_name && formik.errors.first_name) ||
-              (error && errorMessage.first_name)
-                ? true
-                : false
-            }
-            id="first_name"
-            name="first_name"
-            label="First Name"
-            helperText={
-              formik.touched.first_name && formik.errors.first_name
-                ? formik.errors.first_name
-                : error && errorMessage.first_name
-                ? errorMessage.first_name[0]
-                : null
-            }
-            value={formik.values.first_name}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            placeholder=""
-            autoComplete="current-first_name"
-            variant="outlined"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <BadgeOutlinedIcon color="action" />
-                </InputAdornment>
-              ),
-              endAdornment:
-                (formik.touched.first_name && formik.errors.first_name) ||
-                (error && errorMessage.first_name) ? (
-                  <InputAdornment position="end">
-                    <ErrorOutlineIcon color="error" />
-                  </InputAdornment>
-                ) : undefined,
-            }}
-            fullWidth
-          />
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-          <TextField
-            error={
-              (formik.touched.last_name && formik.errors.last_name) ||
-              (error && errorMessage.last_name)
-                ? true
-                : false
-            }
-            id="last_name"
-            name="last_name"
-            label="Last Name"
-            helperText={
-              formik.touched.last_name && formik.errors.last_name
-                ? formik.errors.last_name
-                : error && errorMessage.last_name
-                ? errorMessage.last_name[0]
-                : null
-            }
-            value={formik.values.last_name}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            placeholder=""
-            autoComplete="current-last_name"
-            variant="outlined"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <BadgeOutlinedIcon color="action" />
-                </InputAdornment>
-              ),
-              endAdornment:
-                (formik.touched.last_name && formik.errors.last_name) ||
-                (error && errorMessage.last_name) ? (
-                  <InputAdornment position="end">
-                    <ErrorOutlineIcon color="error" />
-                  </InputAdornment>
-                ) : undefined,
-            }}
-            fullWidth
-          />
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-          <TextField
-            error={
               (formik.touched.email && formik.errors.email) ||
               (error && errorMessage.email)
                 ? true
@@ -197,7 +143,6 @@ function RegisterForm({ setLoading, error, setError, handleNext }) {
             }
             id="email"
             name="email"
-            type="Email"
             label="Email"
             helperText={
               formik.touched.email && formik.errors.email
@@ -209,13 +154,13 @@ function RegisterForm({ setLoading, error, setError, handleNext }) {
             value={formik.values.email}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            placeholder="your-email@provider.com"
+            placeholder=""
             autoComplete="current-email"
             variant="outlined"
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <MailOutlineIcon color="action" />
+                  <BadgeOutlinedIcon color="action" />
                 </InputAdornment>
               ),
               endAdornment:
@@ -229,40 +174,142 @@ function RegisterForm({ setLoading, error, setError, handleNext }) {
             fullWidth
           />
         </div>
-
         <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
           <TextField
             error={
-              (formik.touched.password && formik.errors.password) ||
-              (error && errorMessage.password)
+              (formik.touched.name && formik.errors.name) ||
+              (error && errorMessage.name)
                 ? true
                 : false
             }
-            id="password"
-            name="password"
-            label="Password"
-            type={"password"}
+            id="name"
+            name="name"
+            label="Name"
             helperText={
-              formik.touched.password && formik.errors.password
-                ? formik.errors.password
-                : error && errorMessage.password
-                ? errorMessage.password[0]
+              formik.touched.name && formik.errors.name
+                ? formik.errors.name
+                : error && errorMessage.name
+                ? errorMessage.name[0]
                 : null
             }
-            value={formik.values.password}
+            value={formik.values.name}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            autoComplete="current-password"
+            placeholder=""
+            autoComplete="current-name"
             variant="outlined"
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <BusinessOutlinedIcon color="action" />
+                  <BadgeOutlinedIcon color="action" />
                 </InputAdornment>
               ),
               endAdornment:
-                (formik.touched.password && formik.errors.password) ||
-                (error && errorMessage.password) ? (
+                (formik.touched.name && formik.errors.name) ||
+                (error && errorMessage.name) ? (
+                  <InputAdornment position="end">
+                    <ErrorOutlineIcon color="error" />
+                  </InputAdornment>
+                ) : undefined,
+            }}
+            fullWidth
+          />
+
+          {/* <Button
+              variant="contained"
+              color="primary"
+              component="span"
+              disableElevation
+              sx={{ my: 1 }}
+            >
+              Choose a file
+            </Button> */}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+          <TextField
+            error={
+              (formik.touched.title && formik.errors.title) ||
+              (error && errorMessage.title)
+                ? true
+                : false
+            }
+            id="title"
+            name="title"
+            label="title"
+            helperText={
+              formik.touched.title && formik.errors.title
+                ? formik.errors.title
+                : error && errorMessage.title
+                ? errorMessage.title[0]
+                : null
+            }
+            value={formik.values.title}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            placeholder=""
+            autoComplete="current-title"
+            variant="outlined"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <BadgeOutlinedIcon color="action" />
+                </InputAdornment>
+              ),
+              endAdornment:
+                (formik.touched.title && formik.errors.title) ||
+                (error && errorMessage.title) ? (
+                  <InputAdornment position="end">
+                    <ErrorOutlineIcon color="error" />
+                  </InputAdornment>
+                ) : undefined,
+            }}
+            fullWidth
+          />
+
+          {/* <Button
+              variant="contained"
+              color="primary"
+              component="span"
+              disableElevation
+              sx={{ my: 1 }}
+            >
+              Choose a file
+            </Button> */}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+          <TextField
+            error={
+              (formik.touched.company && formik.errors.company) ||
+              (error && errorMessage.company)
+                ? true
+                : false
+            }
+            id="company"
+            name="company"
+            label="company"
+            helperText={
+              formik.touched.company && formik.errors.company
+                ? formik.errors.company
+                : error && errorMessage.company
+                ? errorMessage.company[0]
+                : null
+            }
+            value={formik.values.company}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            autoComplete="current-company"
+            variant="outlined"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <MailOutlineIcon color="action" />
+                </InputAdornment>
+              ),
+              endAdornment:
+                (formik.touched.company && formik.errors.company) ||
+                (error && errorMessage.company) ? (
                   <InputAdornment position="end">
                     <ErrorOutlineIcon color="error" />
                   </InputAdornment>
@@ -271,9 +318,25 @@ function RegisterForm({ setLoading, error, setError, handleNext }) {
             fullWidth
           />
         </div>
+        <LoadingButton
+          variant="contained"
+          endIcon={<SaveIcon />}
+          loadingPosition="end"
+          loading={formloading}
+          type="submit"
+          sx={{
+            bgcolor: error && "#fd251a",
+            "&:hover": {
+              bgcolor: error && "#fd251a90",
+            },
+            ml: "auto",
+          }}
+        >
+          {"Send Request"}
+        </LoadingButton>
       </form>
     </Paper>
   );
 }
 
-export default RegisterForm;
+export default TestimonialForm;
