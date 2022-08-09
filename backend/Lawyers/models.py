@@ -10,12 +10,15 @@ class Lawyer(models.Model):
     email_verified = models.BooleanField(default=False, editable=False)
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
-    other_names = models.CharField(max_length=100)
-    gender = models.CharField(max_length=6, choices=GENDERS, null=True, blank=True)
+    other_names = models.CharField(max_length=100, null=True, blank=True)
+    gender = models.CharField(max_length=6, choices=GENDERS)
     phone_number = PhoneNumberField(null=True, blank=True)
-    password = models.CharField(blank=True, null=True, editable=False, max_length=300)
+    password = models.CharField(blank=True, null=True, max_length=500)
     picture = models.URLField(blank=True, null=True)
     
+    def type_of_lawyer(self):
+        category = Category.objects.filter(lawyer__email=self.email, verified=True).first()
+        return category
     
     def __str__(self):
         return self.email
@@ -31,20 +34,18 @@ class Profile(models.Model):
     
 
 types_of_lawyers = (
-    ("Bankruptcy Lawyer", "Bankruptcy Lawyer"),
-    ("Business Lawyer", "Business Lawyer"),
-("Constitutional Lawyer", "Constitutional Lawyer"),
-("Criminal Defense Lawyer", "Criminal Defense Lawyer"),
-("Employment and Labor Lawyer", "Employment and Labor Lawyer"),
-("Entertainment Lawyer", "Entertainment Lawyer"),
-("Estate Planning Lawyer", "Entertainment Lawyer"),
-("Family Lawyer", "Family Lawyer"),
-("Immigration Lawyer", "Immigration Lawyer"),
-("Intellectual Property", "Intellectual Property"),
-("Personal Injury Lawyer", "Personal Injury Lawyer"),
-("Tax Lawyer", "Tax Lawyer")
-
-
+    ("Bankruptcy", "Bankruptcy"),
+    ("Business", "Business"),
+    ("Constitutional", "Constitutional"),
+    ("Criminal Defense", "Criminal Defense"),
+    ("Employment and Labor", "Employment and Labor"),
+    ("Entertainment", "Entertainment"),
+    ("Estate Planning", "Estate Planning"),
+    ("Family", "Family"),
+    ("Immigration", "Immigration"),
+    ("Intellectual Property", "Intellectual Property"),
+    ("Personal Injury", "Personal Injury"),
+    ("Tax", "Tax")
 )
 
 class Category(models.Model):
@@ -58,18 +59,35 @@ class Category(models.Model):
         verbose_name_plural = "types"
         
     def __str__(self):
-        return f"{self.lawyer} - {self.type_of_lawyer}"
+        return f"{self.type_of_lawyer}"
     
 
 class Testimonial(models.Model):
     lawyer = models.ForeignKey(Lawyer, on_delete=models.CASCADE)
-    email = models.CharField(max_length=100)
+    email = models.EmailField()
     name = models.CharField(max_length=100)
+    title = models.CharField(max_length=100)
     company = models.CharField(max_length=200, null=True, blank=True)
     role = models.CharField(max_length=100, blank=True, null=True)
-    testimony = models.TextField()
+    testimony = models.TextField(blank=True, null=True)
     date_created = models.DateField(auto_now_add=True)
+    replied = models.BooleanField(default=False)
     
     def __str__(self):
         return self.name
+    
+
+class Bookings(models.Model):
+    lawyer = models.ForeignKey(Lawyer, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    work_at = models.CharField(null=True, blank=True, max_length=100)
+    location = models.CharField(max_length=100)
+    booking_date = models.DateField()
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.name
+    
     

@@ -18,5 +18,6 @@ from .admin import admin_site
 from Lawyers import urls as lawyers_urls
 urlpatterns = [
     path('admin/', admin_site.urls),
-    path("api/", include(lawyers_urls))
+    path("api/", include(lawyers_urls)),
+    path('api-auth/', include('rest_framework.urls'))
 ]
