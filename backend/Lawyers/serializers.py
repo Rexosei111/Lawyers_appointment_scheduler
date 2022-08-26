@@ -15,7 +15,7 @@ class PersonalInfoSerializer(serializers.ModelSerializer):
 class UpdateLawyerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lawyer
-        fields = "__all__"
+        exclude = ["password", "email_verified"]
         
 class CategorySerializer(serializers.ModelSerializer):
     lawyer = serializers.StringRelatedField()
@@ -45,4 +45,4 @@ class GetTestimonialSerializer(serializers.ModelSerializer):
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bookings
-        exclude = ["created_at"]
+        exclude = []

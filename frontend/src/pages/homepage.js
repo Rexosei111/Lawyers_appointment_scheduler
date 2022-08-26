@@ -1,7 +1,6 @@
-import React from 'react'
+import React from "react";
+import Index from "../components/Homepage";
 
 export default function Homepage() {
-  return (
-    <div>Homepage</div>
-  )
+  return <Index />;
 }

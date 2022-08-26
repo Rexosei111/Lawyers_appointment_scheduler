@@ -29,3 +29,13 @@ def authenticate(request):
    token = auth_header.split(" ")[1]
    data = decode_token(token=token)
    return data
+
+def get_date(date_string: str):
+    if(date_string is None):
+        return None
+    try:
+        date = datetime.strptime(date_string, "%m/%d/%Y").date()
+        return date
+    except Exception as msg:
+        print(msg)
+        return None
