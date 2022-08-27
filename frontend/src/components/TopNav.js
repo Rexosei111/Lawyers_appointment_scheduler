@@ -37,8 +37,8 @@ const ResponsiveAppBar = () => {
   };
 
   return (
-    <AppBar position="static" elevation={2} sx={{ bgcolor: "#1e6262" }}>
-      <Container maxWidth="lg" sx={{ color: "white" }}>
+    <AppBar position="static" elevation={0} sx={{ bgcolor: "transparent" }}>
+      <Container maxWidth="lg" sx={{ color: "black" }}>
         <Toolbar disableGutters>
           <AdbIcon sx={{ display: { xs: "none", md: "flex" }, mr: 1 }} />
           <Typography
@@ -122,7 +122,7 @@ const ResponsiveAppBar = () => {
                 component={Link}
                 to="bookings"
                 key={page}
-                sx={{ my: 2, display: "block", color: "white" }}
+                sx={{ my: 2, display: "block", color: "black" }}
               >
                 {page}
               </Button>

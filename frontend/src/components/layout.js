@@ -7,7 +7,7 @@ import ResponsiveAppBar from "./TopNav";
 export default function Layout() {
   return (
     <Container maxWidth="xl" disableGutters>
-      <ResponsiveAppBar />
+      {/* <ResponsiveAppBar /> */}
       <Outlet />
     </Container>
   );

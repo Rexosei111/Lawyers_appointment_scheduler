@@ -1,7 +1,7 @@
 from urllib import request
 from django.urls import path
 
-from .views import add_new_category, delete_category, delete_testimonial, get_bio, get_my_profile, register, request_testimonial, update_lawyer, login
+from .views import BookingList, add_new_category, book_appointment, delete_category, delete_testimonial, get_bio, get_bookingList, get_lawyer, get_lawyer_cert, get_lawyers, get_my_profile, register, request_testimonial, update_lawyer, login
 urlpatterns = [
     path("auth/register", register, name="register_lawyer"),
     path("auth/login", login),
@@ -12,5 +12,10 @@ urlpatterns = [
     path("lawyers/me/bio", get_bio),
     path("lawyers/me/testimonials", request_testimonial),
     path("lawyers/me/testimonials/<int:pk>", delete_testimonial),
+    path("lawyers", get_lawyers),
+    path("lawyers/profile/<int:pk>", get_lawyer),
+    path("lawyers/profile/<str:email>/certs", get_lawyer_cert),
+    path("lawyers/<int:pk>/book", book_appointment),
+    path("lawyers/me/booking", get_bookingList),
     
 ]

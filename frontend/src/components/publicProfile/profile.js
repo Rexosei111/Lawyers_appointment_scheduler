@@ -1,26 +1,46 @@
-import { Avatar, Divider, Grid, Paper, Typography } from "@mui/material";
+import {
+  Avatar,
+  Button,
+  Dialog,
+  Divider,
+  Grid,
+  Paper,
+  Typography,
+} from "@mui/material";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useLocalStorage } from "../../hooks/storage";
 import { API } from "../../lib/Axios_init";
-import Certificates from "./certificate";
-import Info from "./info";
-import Profile from "./profile";
-import SocialMedia from "./socialMedia";
-import Testimonials from "./testimonials";
+import Certificates from "./Certs";
+import Info from "../profile/info";
+import Profile from "../profile/profile";
+import SocialMedia from "../profile/socialMedia";
+import Testimonials from "../profile/testimonials";
+import Details from "./Detais";
+import BookingForm from "./bookingForm";
 
-export default function Me() {
+export default function PublicProfile() {
   const [token, setToken] = useLocalStorage("token", null);
   const [personalInfo, setPersonalInfo] = useState(null);
   const [fetching, setFetching] = useState(false);
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const params = useParams();
 
+  const handleClose = () => {
+    setOpen(!open);
+  };
+
+  const handleOpen = () => {
+    setOpen(true);
+  };
   useEffect(() => {
     async function fetchProfile() {
       setFetching(true);
       try {
-        const { data } = await API.get("lawyers/me", {
+        const { data } = await API.get(`lawyers/profile/${params.id}`, {
           headers: {
             Authorization: `Bearer ${token.access}`,
           },
@@ -40,7 +60,7 @@ export default function Me() {
       }
     }
     fetchProfile();
-  }, [navigate, token.access]);
+  }, [navigate, params.id, token.access]);
 
   return (
     <>
@@ -65,14 +85,24 @@ export default function Me() {
             <SocialMedia />
           </Grid>
           <Grid container item xs={12} lg={9}>
-            <Profile
+            <Button
+              sx={{ ml: "auto", my: 2 }}
+              variant="contained"
+              onClick={handleOpen}
+            >
+              Book Appointment
+            </Button>
+            <Dialog open={open} keepMounted onClose={handleClose}>
+              <BookingForm />
+            </Dialog>
+            <Details
               first_name={personalInfo.first_name}
               other_names={personalInfo.other_names}
               last_name={personalInfo.last_name}
               biography={personalInfo.biography}
             />
-            <Testimonials />
-            <Certificates />
+            {/* <Testimonials /> */}
+            <Certificates email={personalInfo.email} />
           </Grid>
         </Grid>
       ) : (

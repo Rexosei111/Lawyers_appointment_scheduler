@@ -15,36 +15,41 @@ import { API } from "../../lib/Axios_init";
 import EditBio from "./editBio";
 
 const lawyer_types = ["Criminal", "Entertainment", "Cooperatre"];
-export default function Profile({ first_name, other_names, last_name }) {
+export default function Profile({
+  first_name,
+  other_names,
+  last_name,
+  biography,
+}) {
   const [fetching, setFetching] = useState(false);
   const [token, setToken] = useLocalStorage("token", null);
-  const [bio, setBio] = useState(null);
+  const [bio, setBio] = useState(biography);
   const navigate = useNavigate();
   const [edit, setEdit] = useState(false);
 
-  useEffect(() => {
-    async function fetchProfile() {
-      setFetching(true);
-      try {
-        const { data } = await API.get("lawyers/me/bio", {
-          headers: {
-            Authorization: `Bearer ${token.access}`,
-          },
-        });
-        setBio(data.Bio);
-        setFetching(false);
-      } catch (error) {
-        setFetching(false);
+  // useEffect(() => {
+  //   async function fetchProfile() {
+  //     setFetching(true);
+  //     try {
+  //       const { data } = await API.get("lawyers/me/", {
+  //         headers: {
+  //           Authorization: `Bearer ${token.access}`,
+  //         },
+  //       });
+  //       setBio(data.Bio);
+  //       setFetching(false);
+  //     } catch (error) {
+  //       setFetching(false);
 
-        if (axios.isAxiosError(error) && error.response) {
-          if (error.response.status === 401) {
-            navigate("/auth/login");
-          }
-        }
-      }
-    }
-    fetchProfile();
-  }, [navigate, token.access]);
+  //       if (axios.isAxiosError(error) && error.response) {
+  //         if (error.response.status === 401) {
+  //           navigate("/auth/login");
+  //         }
+  //       }
+  //     }
+  //   }
+  //   fetchProfile();
+  // }, [navigate, token.access]);
 
   return (
     <Grid

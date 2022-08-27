@@ -1,12 +1,13 @@
 from functools import partial
+from http.client import ResponseNotReady
 from django.shortcuts import render
-
-from .utils import authenticate, decode_token, get_tokens_for_user
-from .serializers import CategorySerializer, GetTestimonialSerializer, LawyerSerializer, PersonalInfoSerializer, TestimonialSerializer, UpdateLawyerSerializer, loginSerializer, profileSerializer
+from rest_framework import generics, filters
+from .utils import authenticate, decode_token, get_date, get_tokens_for_user
+from .serializers import BookingSerializer, CategorySerializer, GetTestimonialSerializer, LawyerSerializer, PersonalInfoSerializer, TestimonialSerializer, UpdateLawyerSerializer, loginSerializer, profileSerializer
 from rest_framework.decorators import api_view
 from django.contrib.auth.hashers import make_password, check_password
 from rest_framework.response import Response
-from .models import Category, Lawyer, Profile, Testimonial
+from .models import Bookings, Category, Lawyer, Profile, Testimonial
 # Create your views here.
 
 @api_view(["POST"])
@@ -115,7 +116,7 @@ def login(request):
             return Response(status=401, data={"message": "Invalid Credentials"})
     return Response(serializer.errors, status=400)    
         
-@api_view(["GET"])
+@api_view(["GET", "PATCH"])
 def get_my_profile(request):
     lawyer_data = authenticate(request=request)
     if (lawyer_data is None):
@@ -124,9 +125,16 @@ def get_my_profile(request):
        lawyer = Lawyer.objects.get(email=lawyer_data["email"])
     except Lawyer.DoesNotExist:
         return Response({"message": "Lawyer not found"}, status=404)
-    serializer = PersonalInfoSerializer(lawyer)
-    print(serializer.data)
-    return Response(serializer.data)
+    if request.method == "GET":
+        serializer = PersonalInfoSerializer(lawyer)
+        return Response(serializer.data)
+    if request.method == "PATCH":
+        serializer = UpdateLawyerSerializer(lawyer, data=request.data, partial=True)
+        if(serializer.is_valid()):
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+        
 
 @api_view(["GET", "POST", "PATCH"])
 def request_testimonial(request):
@@ -166,3 +174,83 @@ def delete_testimonial(request, pk):
         return Response(status=403)
     testimonial.delete()
     return Response(status=200)
+
+@api_view(["GET"])
+def get_lawyers(request):
+    queryset = Lawyer.objects.all()
+    search_query = request.query_params.get("search")
+    # if(search_query is not None):
+    #     search_query = search_query.strip()
+    #     filters = {
+    #         "author": queryset.filter(author__icontains=search_query),
+    #         "title": queryset.filter(title__icontains=search_query),
+    #         "isbn": queryset.filter(isbn__iexact=search_query),
+    #         "category": queryset.filter(category__icontains=search_query)
+    #     }
+    
+    #     filter = request.query_params.get("filter", None)
+    #     if(filter): queryset = filters[filter]
+    serializer = PersonalInfoSerializer(queryset, many=True)
+    return Response(serializer.data)
+
+@api_view(["GET"])
+def get_lawyer(request, pk):
+    try:
+        lawyer = Lawyer.objects.get(pk=pk)
+    except Lawyer.DoesNotExist:
+        return Response(status=404, data={"message": "lawyer not found"})
+    serializer = PersonalInfoSerializer(lawyer)
+    return Response(serializer.data)
+
+@api_view(["GET"])
+def get_lawyer_cert(request, email):
+    try:
+        certs = Category.objects.filter(lawyer__email=email, verified=True)
+    except:
+        return Response(status=404)
+    serializer = CategorySerializer(certs, many=True)
+    return Response(serializer.data)
+    
+@api_view(["POST"])
+def book_appointment(request, pk):
+    try:
+       lawyer = Lawyer.objects.get(pk=pk)
+    except Lawyer.DoesNotExist:
+        return Response({"message": "Lawyer not found"}, status=404)
+    
+    data = request.data
+    booking = Bookings(lawyer=lawyer)
+    booking_date = get_date(data["booking_date"])
+    print(data["booking_date"])
+    serializer = BookingSerializer(instance=booking, data={**data, "booking_date": booking_date}, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors)
+    
+
+@api_view(["GET"])
+def get_bookingList(request):
+    lawyer_data = authenticate(request=request)
+    if (lawyer_data is None):
+        return Response(status=401, data={"message": "token has expired"})
+    try:
+       lawyer = Lawyer.objects.get(email=lawyer_data["email"])
+    except Lawyer.DoesNotExist:
+        return Response({"message": "Lawyer not found"}, status=404)
+    
+    queryset = Bookings.objects.filter(lawyer__email=lawyer.email).order_by("-created_at")
+    serializer = BookingSerializer(queryset, many=True)
+    return Response(serializer.data)
+    
+    
+    
+class BookingList(generics.ListAPIView):
+    serializer_class = BookingSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name", "email", "status"]
+    
+    def get_queryset(self):
+        queryset = Bookings.objects.filter(lawyer__email=self.kwargs.get("email")).order_by("-created_at")
+        return queryset
+    

@@ -15,6 +15,9 @@ class Lawyer(models.Model):
     phone_number = PhoneNumberField(null=True, blank=True)
     password = models.CharField(blank=True, null=True, max_length=500)
     picture = models.URLField(blank=True, null=True)
+    biography = models.TextField(null=True, blank=True)
+    location = models.CharField(null=True, blank=True, max_length=50)
+    
     
     def type_of_lawyer(self):
         category = Category.objects.filter(lawyer__email=self.email, verified=True).first()
@@ -77,6 +80,11 @@ class Testimonial(models.Model):
         return self.name
     
 
+STATUS = [
+    ("Pending", "Pending"),
+    ("Accepted", "Accepted"),
+    ("Declined", "Declined")
+]
 class Bookings(models.Model):
     lawyer = models.ForeignKey(Lawyer, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
@@ -86,6 +94,7 @@ class Bookings(models.Model):
     booking_date = models.DateField()
     description = models.TextField(blank=True, null=True)
     created_at = models.DateField(auto_now_add=True)
+    status = models.CharField(max_length=10, choices=STATUS, default="Pending")
     
     def __str__(self):
         return self.name

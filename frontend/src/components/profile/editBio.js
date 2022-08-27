@@ -25,16 +25,16 @@ export default function EditBio({ setEdit, setBio, bio }) {
       return null;
     }
     try {
-      const { data } = await API.post(
-        "lawyers/me/bio",
-        { Biography: newBio },
+      const { data } = await API.patch(
+        "lawyers/me",
+        { biography: newBio },
         {
           headers: {
             Authorization: `Bearer ${token.access}`,
           },
         }
       );
-      setBio(data.Bio);
+      setBio(data.biography);
       setEdit(false);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response.status === 401) {
