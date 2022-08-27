@@ -92,6 +92,7 @@ class Bookings(models.Model):
     work_at = models.CharField(null=True, blank=True, max_length=100)
     location = models.CharField(max_length=100)
     booking_date = models.DateField()
+    appointment_time = models.TimeField(null=True, blank=True)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateField(auto_now_add=True)
     status = models.CharField(max_length=10, choices=STATUS, default="Pending")

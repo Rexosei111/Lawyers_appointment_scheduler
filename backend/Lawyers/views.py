@@ -254,3 +254,47 @@ class BookingList(generics.ListAPIView):
         queryset = Bookings.objects.filter(lawyer__email=self.kwargs.get("email")).order_by("-created_at")
         return queryset
     
+
+@api_view(["POST", "PATCH"])
+def respond_to_booking(request, pk):
+    lawyer_data = authenticate(request=request)
+    if (lawyer_data is None):
+        return Response(status=401, data={"message": "token has expired"})
+    try:
+       lawyer = Lawyer.objects.get(email=lawyer_data["email"])
+    except Lawyer.DoesNotExist:
+        return Response({"message": "Lawyer not found"}, status=404)
+    
+    booking = Bookings.objects.get(pk=pk)    
+    note = request.data["note"]
+    if request.method == "POST":
+        if (request.data["accepted"] is True):
+            booking_time = request.data["time"]
+            print(booking_time)
+            if booking_time is None:
+                return Response("You must set Appointment time", status=400)
+            booking.status = "Accepted"
+            booking.appointment_time = booking_time
+            booking.save()
+            bookingUpdate = Bookings.objects.get(pk=pk)    
+            return Response(status=200, data={"time": bookingUpdate.appointment_time})
+
+        if (request.data["accepted"] is False):
+            booking.status = "Declined"
+            booking.save()
+            return Response(status=200)
+    
+    if request.method == "PATCH":
+        if (request.data["Cancel"] is True):
+            booking.status = "Declined"
+            booking.appointment_time = None
+            booking.save()
+            return Response(status=200)
+        
+        booking_time = request.data["time"]
+        if booking_time is None:
+            return Response("You must set Appointment time", status=400)
+        booking.appointment_time = booking_time
+        booking.save()
+        bookingUpdate = Bookings.objects.get(pk=pk)    
+        return Response(status=200, data={"time": bookingUpdate.appointment_time})
