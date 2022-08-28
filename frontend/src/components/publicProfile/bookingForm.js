@@ -1,12 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import axios from "axios";
 import {
-  Box,
   Button,
-  Container,
   InputAdornment,
-  MenuItem,
   Paper,
   Stack,
   TextField,
@@ -20,10 +17,8 @@ import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SaveIcon from "@mui/icons-material/Save";
 import { API } from "../../lib/Axios_init";
-import { useLocalStorage } from "../../hooks/storage";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import { MobileDatePicker } from "@mui/x-date-pickers/MobileDatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
@@ -32,7 +27,6 @@ const initialValues = {
   email: "",
   name: "",
   description: "",
-  time: "",
   work_at: "",
 };
 
@@ -61,12 +55,9 @@ function BookingForm({ handleClose }) {
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState({});
   const [success, setSuccess] = useState(false);
-  const navigate = useNavigate();
   const [date, setDate] = useState(null);
-  const [time, setTime] = useState(null);
   const params = useParams();
-
-  const [token, setToken] = useLocalStorage("token", null);
+  const [link, setLink] = useState(null);
 
   const small = useMediaQuery("(max-width:500px)");
   const formik = useFormik({
@@ -75,16 +66,12 @@ function BookingForm({ handleClose }) {
       setFormLoading(true);
       setError(false);
       try {
-        const { data } = await API.post(
-          `lawyers/${params.id}/book`,
-          { ...values, booking_date: new Date(date).toLocaleDateString() }
-          // {
-          //   headers: {
-          //     Authorization: `Bearer ${token.access}`,
-          //   },
-          // }
-        );
+        const { data } = await API.post(`lawyers/${params.id}/book`, {
+          ...values,
+          booking_date: new Date(date).toLocaleDateString(),
+        });
         console.log(data);
+        setLink(data.link);
         setFormLoading(false);
         setSuccess(true);
         setError(false);
@@ -92,7 +79,6 @@ function BookingForm({ handleClose }) {
         handleClose(false);
       } catch (error) {
         if (axios.isAxiosError(error)) {
-          // if (error.response.status === 401) navigate("/auth/login");
           setErrorMessage((prevState) => ({
             ...prevState,
             ...error.response.data,
@@ -106,6 +92,9 @@ function BookingForm({ handleClose }) {
     validate,
   });
 
+  const cancelAppointment = async () => {
+    await API.delete(`appointments/${link.slice(-2)}`);
+  };
   useEffect(() => {
     setSuccess(false);
   }, []);
@@ -336,14 +325,6 @@ function BookingForm({ handleClose }) {
                     }
                     renderInput={(params) => <TextField {...params} />}
                   />
-                  <TimePicker
-                    label="Time"
-                    value={time}
-                    onChange={(newValue) => {
-                      setTime(newValue);
-                    }}
-                    renderInput={(params) => <TextField {...params} />}
-                  />
                 </Stack>
               </LocalizationProvider>
             </div>
@@ -423,7 +404,10 @@ function BookingForm({ handleClose }) {
             You will recieve an Email to confirm your booking. The email will
             contain a link to check the status of your booking
           </Typography>
-          <Button>Cancel Booking</Button>
+          <Typography textAlign={"center"} component={Link} to={link}>
+            {link}
+          </Typography>
+          <Button onClick={cancelAppointment}>Cancel Booking</Button>
         </Stack>
       )}
     </Paper>

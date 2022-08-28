@@ -1,4 +1,5 @@
-from .models import Bookings, Category, Lawyer, Profile, Testimonial
+from dataclasses import fields
+from .models import Bookings, Category, Lawyer, Profile, SocialLinks, Testimonial
 from rest_framework import serializers
 
 
@@ -6,8 +7,14 @@ class LawyerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lawyer
         fields = ["first_name", "last_name", "email", "password"]
+class CategorySerializer(serializers.ModelSerializer):
+    lawyer = serializers.StringRelatedField()
+    class Meta:
+        model = Category
+        fields = "__all__"
         
 class PersonalInfoSerializer(serializers.ModelSerializer):
+    category_set = CategorySerializer(many=True, read_only=True)
     class Meta:
         model = Lawyer
         # fields = ["first_name", "last_name", "email", "other_names", "phone_number", "gender", "picture"]
@@ -17,11 +24,6 @@ class UpdateLawyerSerializer(serializers.ModelSerializer):
         model = Lawyer
         exclude = ["password", "email_verified"]
         
-class CategorySerializer(serializers.ModelSerializer):
-    lawyer = serializers.StringRelatedField()
-    class Meta:
-        model = Category
-        fields = "__all__"
         
 class loginSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -45,4 +47,16 @@ class GetTestimonialSerializer(serializers.ModelSerializer):
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bookings
-        exclude = []
+        exclude = ["appointment_time"]
+        
+class AppointmentSerializer(serializers.ModelSerializer):
+    lawyer = PersonalInfoSerializer()
+    class Meta:
+        model = Bookings
+        fields = "__all__"
+        
+
+class SocialLinkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SocialLinks
+        fields = "__all__"

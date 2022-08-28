@@ -1,5 +1,4 @@
 import {
-  Box,
   Breadcrumbs,
   Card,
   CardActionArea,
@@ -9,14 +8,13 @@ import {
   Typography,
 } from "@mui/material";
 import React from "react";
+import { truncateText } from "../../utils";
 
 export default function BookingCard({ booking, setActiveBooking }) {
   return (
     <Card
       elevation={0}
-      //   variant={"outlined"}
-      //   sx={{ width: { sx: "100%", md: "50%" } }}
-      onClick={() => setActiveBooking(booking)}
+      onClick={() => setActiveBooking && setActiveBooking(booking)}
     >
       <CardActionArea>
         <CardHeader
@@ -36,7 +34,7 @@ export default function BookingCard({ booking, setActiveBooking }) {
           }
         />
         <CardContent>
-          <Typography>{booking.description}</Typography>
+          <Typography>{truncateText(booking.description)}</Typography>
         </CardContent>
       </CardActionArea>
     </Card>

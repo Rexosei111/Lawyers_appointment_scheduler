@@ -17,20 +17,12 @@ export default function SearchField({ filter, date }) {
   const handleEnterSearch = (event) => {
     if (query.length === 0) return false;
     if (event.key === "Enter") {
-      navigate(
-        `?search=${query}${filter ? `&filter=${filter}` : ""}${
-          date ? `&pub_date=${date}` : ""
-        }`
-      );
+      navigate(`/lawyers/?search=${query}${filter ? `&filter=${filter}` : ""}`);
     }
   };
 
   const handleSearch = (event) => {
-    navigate(
-      `?search=${query}${filter ? `&filter=${filter}` : ""}${
-        date ? `&pub_date=${date}` : ""
-      }`
-    );
+    navigate(`/lawyers/?search=${query}${filter ? `&filter=${filter}` : ""}`);
   };
   return (
     <TextField

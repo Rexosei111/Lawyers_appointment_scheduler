@@ -16,6 +16,7 @@ export default function Details({
   other_names,
   last_name,
   biography,
+  certs,
 }) {
   return (
     <Grid
@@ -23,26 +24,22 @@ export default function Details({
       xs={12}
       component={Paper}
       elevation={0}
-      variant={"outlined"}
+      // variant={"outlined"}
       padding={2}
     >
       <Typography variant="h4">
         {first_name + " " + other_names + " " + last_name}
       </Typography>
       <Breadcrumbs separator=".">
-        {lawyer_types.map((option, index) => (
+        {certs.map((option, index) => (
           <Typography variant="caption" key={index}>
-            {option}
+            {option.type_of_lawyer}
           </Typography>
         ))}
       </Breadcrumbs>
-      {/* <Divider orientation="horizontal" sx={{ my: 1 }} /> */}
-      {/* <Typography variant="body2" color={"GrayText"}>
-          Bio
-        </Typography> */}
 
       <>
-        <Typography variant="caption" component={"div"}>
+        <Typography variant="body2" component={"div"} mt={1}>
           {biography}
         </Typography>
       </>

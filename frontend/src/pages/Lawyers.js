@@ -1,43 +1,46 @@
-import { Paper, Stack, Typography } from "@mui/material";
+import { Grid, Paper, Stack, Typography } from "@mui/material";
 import { Container } from "@mui/system";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import LawyersCard from "../components/LawyersCard";
 import { useLocalStorage } from "../hooks/storage";
 import { API } from "../lib/Axios_init";
 
 export default function Lawyers() {
+  const location = useLocation();
+
   const [lawyers, setLawyers] = useState(null);
   const [token, setToken] = useLocalStorage("token", null);
   const [fetching, setFetching] = useState(false);
+  const query = useMemo(() => new URLSearchParams(location.search), [location]);
 
   useEffect(() => {
+    console.log(query);
     async function getLawyers() {
       setFetching(true);
-      const { data } = await API.get("lawyers", {
-        headers: {
-          Authorization: `Bearer ${token.access}`,
-        },
-      });
+      const { data } = await API.get(`lawyers?${query}`);
       console.log(data);
       setLawyers(data);
       setFetching(false);
     }
     getLawyers();
-  }, [token]);
+  }, [token, query]);
 
   return (
     <>
-      <Container maxWidth="md">
+      <Container>
         {fetching ? (
           <Typography>Fetching...</Typography>
         ) : lawyers === null || lawyers.length === 0 ? (
           <Typography>Nothing to show</Typography>
         ) : (
-          <Stack justifyContent={"center"} spacing={2}>
+          <Grid container justifyContent={"flex-start"} spacing={2}>
             {lawyers.map((lawyer) => (
-              <LawyersCard lawyer={lawyer} key={lawyer.id} />
+              <Grid item xs={12} md={6}>
+                <LawyersCard lawyer={lawyer} key={lawyer.id} />
+              </Grid>
             ))}
-          </Stack>
+          </Grid>
         )}
       </Container>
     </>

@@ -1,20 +1,9 @@
 import {
-  alpha,
-  Badge,
   Box,
-  Breadcrumbs,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  CardHeader,
   CircularProgress,
   Grid,
-  List,
-  ListItem,
   Stack,
   Tab,
-  Tabs,
   Typography,
 } from "@mui/material";
 import axios from "axios";
@@ -26,9 +15,10 @@ import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 import BookingCard from "./BookingCard";
-import EventIcon from "@mui/icons-material/Event";
-import HandshakeIcon from "@mui/icons-material/Handshake";
-import CancelIcon from "@mui/icons-material/Cancel";
+import BookingDetails from "./BookingDetails";
+import AcceptedPanel from "./AcceptedPanel";
+import DeclinedPanel from "./DeclinedPanel";
+import CompletedPanel from "./Completedpanel";
 
 function Counter({ value = 5 }) {
   return (
@@ -51,12 +41,20 @@ export default function Bookings() {
   const [token, setToken] = useLocalStorage("token", null);
   const navigate = useNavigate();
   const [bookings, setBookings] = useState(null);
-  const [value, setValue] = React.useState(0);
+  const [value, setValue] = React.useState("1");
   const [fetching, setFetching] = useState(true);
   const [activeBooking, setActiveBooking] = useState(null);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
+  };
+
+  const updateBookings = (id, newInfo) => {
+    setBookings((prevState) => [
+      ...prevState.map((state) =>
+        state.id === id ? { ...state, ...newInfo } : state
+      ),
+    ]);
   };
 
   useEffect(() => {
@@ -70,7 +68,7 @@ export default function Bookings() {
         });
         console.log(data);
         setBookings(data);
-        setActiveBooking(data[0]);
+        setActiveBooking(data.filter(({ status }) => status === "Pending")[0]);
         setFetching(false);
       } catch (error) {
         setFetching(false);
@@ -82,6 +80,13 @@ export default function Bookings() {
     }
     get_bookings();
   }, [token, navigate]);
+
+  useEffect(() => {
+    if (bookings)
+      setActiveBooking(
+        bookings.filter(({ status }) => status === "Pending")[0]
+      );
+  }, [bookings]);
 
   return (
     <Stack>
@@ -174,88 +179,72 @@ export default function Bookings() {
               </TabList>
             </Box>
             <TabPanel value="1" sx={{ paddingX: 0 }}>
-              <Stack direction={"row"} spacing={2}>
-                <Grid
-                  container
-                  spacing={2}
-                  width={"50%"}
-                  // justifyContent="center"
-                  // alignItems={"flex-start"}
-                >
-                  {bookings.map(
-                    (booking) =>
-                      booking.status === "Pending" && (
-                        <Grid item sx={12} xl={6} key={booking.id}>
-                          <BookingCard
-                            booking={booking}
-                            setActiveBooking={setActiveBooking}
-                          />
-                        </Grid>
-                      )
-                  )}
-                </Grid>
-                <Card
-                  sx={{
-                    width: 500,
-                    position: "sticky",
-                    height: "fit-content",
-                    top: ({ spacing }) => spacing(2),
-                  }}
-                  variant={"outlined"}
-                  elevation={0}
-                >
-                  <CardHeader
-                    title={
-                      <Stack direction={"row"} alignItems="center">
-                        <Typography>{activeBooking.name}</Typography>
-                        <Typography variant="body2" ml={"auto"}>
-                          {new Date(activeBooking.created_at).toDateString()}
-                        </Typography>
-                      </Stack>
-                    }
-                    subheader={
-                      <Breadcrumbs separator="-">
-                        <Typography variant="caption">
-                          {activeBooking.email}
-                        </Typography>
-                        <Typography variant="caption">
-                          {activeBooking.location}
-                        </Typography>
-                      </Breadcrumbs>
-                    }
+              {bookings.filter(({ status }) => status === "Pending").length >
+              0 ? (
+                <Stack direction={"row"} spacing={2}>
+                  <Grid container spacing={2} width={"50%"}>
+                    {bookings.map(
+                      (booking) =>
+                        booking.status === "Pending" && (
+                          <Grid item sx={12} xl={6} key={booking.id}>
+                            <BookingCard
+                              booking={booking}
+                              setActiveBooking={setActiveBooking}
+                            />
+                          </Grid>
+                        )
+                    )}
+                  </Grid>
+                  <BookingDetails
+                    activeBooking={activeBooking}
+                    updateBookings={updateBookings}
                   />
-                  <CardContent>
-                    <Typography>{activeBooking.description}</Typography>
-                    <Stack mt={2} direction={"row"} spacing={1}>
-                      <EventIcon fontSize={"small"} />
-                      <Typography variant="caption">
-                        Appointment Date:{" "}
-                        {new Date(activeBooking.booking_date).toDateString()}
-                      </Typography>
-                    </Stack>
-                  </CardContent>
-                  <CardActions>
-                    <Button
-                      sx={{ ml: "auto" }}
-                      variant={"contained"}
-                      endIcon={<HandshakeIcon fontSize="small" />}
-                    >
-                      Accept
-                    </Button>
-                    <Button
-                      variant={"outlined"}
-                      color={"error"}
-                      endIcon={<CancelIcon fontSize="small" />}
-                    >
-                      Decline
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Stack>
+                </Stack>
+              ) : (
+                <Typography variant="h5" color={"GrayText"} textAlign="center">
+                  No Pending Appointments
+                </Typography>
+              )}
             </TabPanel>
-            <TabPanel value="2">Item Two</TabPanel>
-            <TabPanel value="3">Item Three</TabPanel>
-            <TabPanel value="4">Item Four</TabPanel>
+            <TabPanel value="2">
+              {bookings.filter(({ status }) => status === "Accepted").length >
+              0 ? (
+                <AcceptedPanel
+                  bookings={bookings}
+                  updateBookings={updateBookings}
+                />
+              ) : (
+                <Typography variant="h5" color={"GrayText"} textAlign="center">
+                  No Accepted Appointments
+                </Typography>
+              )}
+            </TabPanel>
+            <TabPanel value="3">
+              {bookings.filter(({ status }) => status === "Declined").length >
+              0 ? (
+                <DeclinedPanel
+                  bookings={bookings}
+                  updateBookings={updateBookings}
+                />
+              ) : (
+                <Typography variant="h5" color={"GrayText"} textAlign="center">
+                  No Declined Appointments
+                </Typography>
+              )}
+            </TabPanel>
+            <TabPanel value="4">
+              {bookings.filter(({ status }) => status === "Completed").length >
+              0 ? (
+                <CompletedPanel
+                  bookings={bookings}
+                  updateBookings={updateBookings}
+                />
+              ) : (
+                <Typography variant="h5" color={"GrayText"} textAlign="center">
+                  No Completed Appointments
+                </Typography>
+              )}
+            </TabPanel>
           </TabContext>
         </Box>
       )}
