@@ -32,11 +32,7 @@ export default function Certificates({ email }) {
 
   useEffect(() => {
     async function getCerts() {
-      const { data } = await API.get(`lawyers/profile/${email}/certs`, {
-        headers: {
-          Authorization: `Bearer ${token.access}`,
-        },
-      });
+      const { data } = await API.get(`lawyers/profile/${email}/certs`, {});
       console.log(data);
       setCerts(data);
     }

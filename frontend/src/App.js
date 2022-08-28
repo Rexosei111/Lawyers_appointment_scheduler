@@ -11,17 +11,21 @@ import Lawyers from "./pages/Lawyers";
 import Login from "./pages/login";
 import Register from "./pages/register";
 import "./App.css";
+import Appointments from "./components/Appointments";
+import Logout from "./pages/logout";
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
         <Route index element={<Homepage />} />
+        <Route path="appointments/:id" element={<Appointments />} />
       </Route>
       <Route path="/auth/" element={<AuthLayout />}>
         <Route index element={<Login />} />
         <Route path="register" element={<Register />} />
         <Route path="login" element={<Login />} />
+        <Route path="logout" element={<Logout />} />
       </Route>
       <Route path="/lawyers/" element={<LawyersLayout />}>
         <Route index element={<Lawyers />} />

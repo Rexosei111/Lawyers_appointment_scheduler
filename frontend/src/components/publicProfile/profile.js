@@ -1,32 +1,21 @@
-import {
-  Avatar,
-  Button,
-  Dialog,
-  Divider,
-  Grid,
-  Paper,
-  Typography,
-} from "@mui/material";
+import { Avatar, Button, Dialog, Grid, Typography } from "@mui/material";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { useLocalStorage } from "../../hooks/storage";
+import { useNavigate, useParams } from "react-router-dom";
 import { API } from "../../lib/Axios_init";
 import Certificates from "./Certs";
 import Info from "../profile/info";
-import Profile from "../profile/profile";
 import SocialMedia from "../profile/socialMedia";
-import Testimonials from "../profile/testimonials";
 import Details from "./Detais";
 import BookingForm from "./bookingForm";
+import PSocialMedia from "./PSocialMedia";
+import PInfo from "./PInfo";
 
 export default function PublicProfile() {
-  const [token, setToken] = useLocalStorage("token", null);
   const [personalInfo, setPersonalInfo] = useState(null);
   const [fetching, setFetching] = useState(false);
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
   const params = useParams();
 
   const handleClose = () => {
@@ -40,13 +29,9 @@ export default function PublicProfile() {
     async function fetchProfile() {
       setFetching(true);
       try {
-        const { data } = await API.get(`lawyers/profile/${params.id}`, {
-          headers: {
-            Authorization: `Bearer ${token.access}`,
-          },
-        });
+        const { data } = await API.get(`lawyers/profile/${params.id}`, {});
         setPersonalInfo(data);
-        // console.log(data);
+        console.log(data);
         setFetching(false);
       } catch (error) {
         setFetching(false);
@@ -60,7 +45,7 @@ export default function PublicProfile() {
       }
     }
     fetchProfile();
-  }, [navigate, params.id, token.access]);
+  }, [navigate, params.id]);
 
   return (
     <>
@@ -81,8 +66,8 @@ export default function PublicProfile() {
                 src={personalInfo.picture}
               />
             </Grid>
-            <Info personalInfo={personalInfo} />
-            <SocialMedia />
+            <PInfo personalInfo={personalInfo} />
+            <PSocialMedia />
           </Grid>
           <Grid container item xs={12} lg={9}>
             <Button
@@ -100,6 +85,7 @@ export default function PublicProfile() {
               other_names={personalInfo.other_names}
               last_name={personalInfo.last_name}
               biography={personalInfo.biography}
+              certs={personalInfo.category_set}
             />
             {/* <Testimonials /> */}
             <Certificates email={personalInfo.email} />

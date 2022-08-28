@@ -3,11 +3,12 @@ from http.client import ResponseNotReady
 from django.shortcuts import render
 from rest_framework import generics, filters
 from .utils import authenticate, decode_token, get_date, get_tokens_for_user
-from .serializers import BookingSerializer, CategorySerializer, GetTestimonialSerializer, LawyerSerializer, PersonalInfoSerializer, TestimonialSerializer, UpdateLawyerSerializer, loginSerializer, profileSerializer
+from .serializers import AppointmentSerializer, BookingSerializer, CategorySerializer, GetTestimonialSerializer, LawyerSerializer, PersonalInfoSerializer, SocialLinkSerializer, TestimonialSerializer, UpdateLawyerSerializer, loginSerializer, profileSerializer
 from rest_framework.decorators import api_view
 from django.contrib.auth.hashers import make_password, check_password
 from rest_framework.response import Response
-from .models import Bookings, Category, Lawyer, Profile, Testimonial
+from .models import Bookings, Category, Lawyer, Profile, SocialLinks, Testimonial
+from django.db.models import Q
 # Create your views here.
 
 @api_view(["POST"])
@@ -111,7 +112,8 @@ def login(request):
         password_checked = check_password(data["password"], lawyer.password)
         if password_checked:
             token = get_tokens_for_user(lawyer)
-            return Response(status=200, data={"access": token})
+            serializer = PersonalInfoSerializer(lawyer)
+            return Response(status=200, data={"access": token, **serializer.data})
         else:
             return Response(status=401, data={"message": "Invalid Credentials"})
     return Response(serializer.errors, status=400)    
@@ -177,19 +179,17 @@ def delete_testimonial(request, pk):
 
 @api_view(["GET"])
 def get_lawyers(request):
-    queryset = Lawyer.objects.all()
+    queryset = Lawyer.objects.filter(category__verified=True)
     search_query = request.query_params.get("search")
-    # if(search_query is not None):
-    #     search_query = search_query.strip()
-    #     filters = {
-    #         "author": queryset.filter(author__icontains=search_query),
-    #         "title": queryset.filter(title__icontains=search_query),
-    #         "isbn": queryset.filter(isbn__iexact=search_query),
-    #         "category": queryset.filter(category__icontains=search_query)
-    #     }
+    if(search_query is not None):
+        search_query = search_query.strip()
+        print(queryset)
+        queryset = queryset.filter(Q(first_name__icontains=search_query) | Q(last_name__icontains=search_query) | Q(other_names__icontains=search_query))
+        print(queryset)
+        filter = request.query_params.get("filter", None)
+        if(filter): 
+            queryset = queryset.filter(category__type_of_lawyer__icontains=filter)
     
-    #     filter = request.query_params.get("filter", None)
-    #     if(filter): queryset = filters[filter]
     serializer = PersonalInfoSerializer(queryset, many=True)
     return Response(serializer.data)
 
@@ -224,8 +224,9 @@ def book_appointment(request, pk):
     print(data["booking_date"])
     serializer = BookingSerializer(instance=booking, data={**data, "booking_date": booking_date}, partial=True)
     if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data)
+        appointment = serializer.save()
+        
+        return Response(status=200, data={"link": f"http://localhost:3000/appointments/{appointment.id}"})
     return Response(serializer.errors)
     
 
@@ -298,3 +299,64 @@ def respond_to_booking(request, pk):
         booking.save()
         bookingUpdate = Bookings.objects.get(pk=pk)    
         return Response(status=200, data={"time": bookingUpdate.appointment_time})
+
+@api_view(["GET", "DELETE", "PATCH"])
+def view_appointment(request, pk):
+    try:
+        booking = Bookings.objects.get(pk=pk)
+    except Bookings.DoesNotExist:
+        return Response(status=404)
+    
+    if request.method == "GET":
+        serializer = AppointmentSerializer(booking)
+        print(serializer.data)
+        return Response(serializer.data)
+    if request.method == "DELETE":
+        booking.delete()
+        return Response(status=200)
+    if request.method == "PATCH":
+        booking.status = "Completed"
+        booking.save()
+        return Response(status=200)
+    
+
+@api_view(["GET", "POST", "DELETE"])
+def get_links(request):
+    lawyer_data = authenticate(request=request)
+    if (lawyer_data is None):
+        return Response(status=401, data={"message": "token has expired"})
+    try:
+       lawyer = Lawyer.objects.get(email=lawyer_data["email"])
+    except Lawyer.DoesNotExist:
+        return Response({"message": "Lawyer not found"}, status=404)
+    
+    if request.method == "GET":
+        try:
+            socialLinks = SocialLinks.objects.filter(lawyer__pk=lawyer.pk)
+        except SocialLinks.DoesNotExist:
+            return Response(status=404)
+        serializer = SocialLinkSerializer(socialLinks, many=True)
+        return Response(serializer.data)
+    
+    if request.method == "POST":
+        link = SocialLinks(lawyer=lawyer)
+        serializer = SocialLinkSerializer(link, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors)
+    
+    if request.method == "DELETE":
+        query = request.query_params.get("linkId")
+        link = SocialLinks.objects.get(pk=int(query))
+        link.delete()
+        return Response(status=200)
+    
+@api_view(["GET"])
+def get_socialLinks(request, pk):
+    try:
+        socialLinks = SocialLinks.objects.filter(lawyer__pk=pk)
+    except SocialLinks.DoesNotExist:
+        return Response(status=404)
+    serializer = SocialLinkSerializer(socialLinks, many=True)
+    return Response(serializer.data)

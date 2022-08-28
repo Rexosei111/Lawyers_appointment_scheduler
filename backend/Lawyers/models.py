@@ -26,6 +26,20 @@ class Lawyer(models.Model):
     def __str__(self):
         return self.email
     
+LINKS = (
+    ("Facebook", "Facebook"),
+    ("Twitter", "Twitter"),
+    ("Instagram", "Instagram"),
+    ("LinkedIn", "LinkedIn")
+)
+class SocialLinks(models.Model):
+    lawyer = models.ForeignKey(Lawyer, on_delete=models.CASCADE)
+    link = models.URLField()
+    name = models.CharField(max_length=20, choices=LINKS)
+    
+    def __str__(self):
+        return self.name
+    
 
 class Profile(models.Model):
     lawyer = models.OneToOneField(Lawyer, to_field="email", limit_choices_to={"email_verified": True}, on_delete=models.CASCADE)
@@ -83,7 +97,8 @@ class Testimonial(models.Model):
 STATUS = [
     ("Pending", "Pending"),
     ("Accepted", "Accepted"),
-    ("Declined", "Declined")
+    ("Declined", "Declined"),
+    ("Completed", "Completed")
 ]
 class Bookings(models.Model):
     lawyer = models.ForeignKey(Lawyer, on_delete=models.CASCADE)

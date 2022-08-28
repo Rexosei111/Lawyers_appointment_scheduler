@@ -56,12 +56,15 @@ export default function Me() {
           <Grid container item xs={12} sm={12} md={12} lg={3}>
             <Grid item xs={12}>
               <Avatar
-                alt="profile picture"
-                sx={{ height: 150, width: 150 }}
+                alt={personalInfo.email.toUpperCase()}
+                sx={{ height: 150, width: 150, fontSize: 25, color: "white" }}
                 src={personalInfo.picture}
               />
             </Grid>
-            <Info personalInfo={personalInfo} />
+            <Info
+              personalInfo={personalInfo}
+              setPersonalInfo={setPersonalInfo}
+            />
             <SocialMedia />
           </Grid>
           <Grid container item xs={12} lg={9}>

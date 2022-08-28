@@ -1,11 +1,10 @@
-import { Container, MenuItem, Paper, Stack, TextField } from "@mui/material";
+import { Container, MenuItem, Stack, TextField } from "@mui/material";
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
 import SearchField from "./searchField";
 import ResponsiveAppBar from "./TopNav";
 
 const filterOptions = [
-  { label: "Name", value: "Name" },
   { label: "Bankruptcy", value: "Bankruptcy" },
   { label: "Business", value: "Business" },
   { label: "Constitutional", value: "Constitutional" },
@@ -39,17 +38,17 @@ export default function LawyersLayout() {
           alignItems={"center"}
           justifyContent={"center"}
         >
-          <SearchField />
+          <SearchField filter={filter} />
           <TextField
-            id="outlined-select-currency"
+            id="outlined-select-filter"
             select
             label="Filter by"
             value={filter}
             onChange={handleChange}
             // helperText="Please select your currency"
           >
-            {filterOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
+            {filterOptions.map((option, index) => (
+              <MenuItem key={index} value={option.value}>
                 {option.label}
               </MenuItem>
             ))}

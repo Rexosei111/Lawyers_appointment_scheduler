@@ -1,5 +1,6 @@
 import {
   Avatar,
+  Breadcrumbs,
   Card,
   CardActionArea,
   CardContent,
@@ -20,13 +21,13 @@ export default function LawyersCard({ lawyer }) {
     navigate(`profile/${id}`);
   };
   return (
-    <Card elevation={0} variant="outlined">
+    <Card elevation={0}>
       <CardActionArea onClick={() => handleClick(lawyer.id)}>
         <CardHeader
-          action={<Rating value={4} readOnly size="medium" />}
+          // action={<Rating value={4} readOnly size="medium" />}
           avatar={
             <Avatar
-              sx={{ bgcolor: blueGrey[500], height: 70, width: 70 }}
+              sx={{ height: 70, width: 70 }}
               aria-label="recipe"
               src={lawyer.picture}
             >
@@ -34,13 +35,24 @@ export default function LawyersCard({ lawyer }) {
             </Avatar>
           }
           title={`${lawyer.first_name} ${lawyer.other_names} ${lawyer.last_name}`}
-          subheader="Criminal Defence"
+          subheader={
+            <Breadcrumbs separator="-">
+              {lawyer.category_set.map((item, index) => (
+                <Typography variant="caption" key={index}>
+                  {item.type_of_lawyer}
+                </Typography>
+              ))}
+            </Breadcrumbs>
+          }
           titleTypographyProps={{
-            variant: "h6",
+            variant: "body1",
+            fontSize: 25,
           }}
         />
         <CardContent>
-          <Typography>{truncateText(lawyer.biography)}</Typography>
+          <Typography variant="body2">
+            {truncateText(lawyer.biography)}
+          </Typography>
         </CardContent>
       </CardActionArea>
     </Card>
