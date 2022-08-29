@@ -43,7 +43,7 @@ export default function Me() {
       }
     }
     fetchProfile();
-  }, [navigate, token.access]);
+  }, [navigate, token, token.access]);
 
   return (
     <>
