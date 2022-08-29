@@ -41,7 +41,7 @@ const validate = (values) => {
   return errors;
 };
 
-function LoginForm() {
+function LoginForm({setStatus}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState({});
@@ -57,12 +57,14 @@ function LoginForm() {
       setLoading(true);
       try {
         const { data } = await API.post("auth/login", values);
-        setToken(data);
-        setLoading(false);
-        setError(false);
-        navigate(`/lawyers/me`);
+          setToken(data);
+          setLoading(false);
+          setError(false);
+          navigate(`/lawyers/me`);
+        
       } catch (error) {
         if (axios.isAxiosError(error) && error.response) {
+          setStatus(error.status)
           setErrorMessage((prevState) => ({
             ...prevState,
             ...error.response.data,

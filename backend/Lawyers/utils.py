@@ -53,8 +53,14 @@ def get_date(date_string: str):
 ses_client = boto3.client("ses", "us-east-1")
 
 
-def is_email_verified(email):
+def is_email_verified(email, email_verified):
+    if (email_verified):
+        return True
     identities = ses_client.list_identities()["Identities"]
     if email in identities:
         return True
     return False
+
+
+def verify_email(email):
+    ses_client.verify_email_address(EmailAddress=email)

@@ -6,7 +6,7 @@ import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
-import { Container } from "@mui/material";
+import { Alert, AlertTitle, Container } from "@mui/material";
 import OtherInfoForm from "../components/auth/other-info-form";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import LoadingButton from "@mui/lab/LoadingButton";
@@ -26,6 +26,7 @@ export default function Register() {
   const [skipped, setSkipped] = React.useState(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [ verified, setVerified] = useState(true)
   const navigate = useNavigate();
 
   const isStepOptional = (step) => {
@@ -83,6 +84,7 @@ export default function Register() {
       setError={setError}
       error={error}
       handleNext={handleNext}
+      setVerified={setVerified}
     />,
     <OtherInfoForm
       setLoading={setLoading}
@@ -99,6 +101,11 @@ export default function Register() {
   ];
   return (
     <Container maxWidth="md">
+      {verified === false &&<Alert severity="info" sx={{ my: 2}}>
+        <AlertTitle>{"Email Verification"}</AlertTitle>
+        An email has been sent to your email address - <strong>Check it out!</strong>
+      </Alert>
+}
       <Box
         sx={{
           display: "flex",

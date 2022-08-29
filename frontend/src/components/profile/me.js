@@ -18,6 +18,9 @@ export default function Me() {
 
   useEffect(() => {
     async function fetchProfile() {
+      if (token === null) {
+        navigate("/auth/login")
+      }
       setFetching(true);
       try {
         const { data } = await API.get("lawyers/me", {
