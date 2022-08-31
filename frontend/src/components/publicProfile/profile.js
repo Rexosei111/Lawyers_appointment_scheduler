@@ -12,19 +12,20 @@ import PSocialMedia from "./PSocialMedia";
 import PInfo from "./PInfo";
 import CheckEmail from "./CheckEmail";
 import VerifyEmail from "./VerifyEmail";
+import PReviews from "./PReviews";
 
 export default function PublicProfile() {
   const [personalInfo, setPersonalInfo] = useState(null);
-  const [verified, setVerified] = useState(null)
-  const [email, setEmail] = useState(null)
+  const [verified, setVerified] = useState(null);
+  const [email, setEmail] = useState(null);
   const [fetching, setFetching] = useState(false);
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const params = useParams();
 
   const handleClose = () => {
-    setVerified(null)
-    setEmail(null)
+    setVerified(null);
+    setEmail(null);
     setOpen(!open);
   };
 
@@ -84,9 +85,13 @@ export default function PublicProfile() {
               Book Appointment
             </Button>
             <Dialog open={open} keepMounted onClose={handleClose}>
-              {verified === null ? <CheckEmail setVerified={setVerified} setEmail={setEmail} /> : verified === false ? <VerifyEmail email={email}/> :
-              <BookingForm email={email} />
-              }
+              {verified === null ? (
+                <CheckEmail setVerified={setVerified} setEmail={setEmail} />
+              ) : verified === false ? (
+                <VerifyEmail email={email} />
+              ) : (
+                <BookingForm email={email} />
+              )}
             </Dialog>
             <Details
               first_name={personalInfo.first_name}
@@ -97,6 +102,7 @@ export default function PublicProfile() {
             />
             {/* <Testimonials /> */}
             <Certificates email={personalInfo.email} />
+            <PReviews />
           </Grid>
         </Grid>
       ) : (

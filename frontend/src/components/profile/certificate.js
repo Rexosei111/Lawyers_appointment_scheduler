@@ -28,6 +28,8 @@ import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 // import { Link } from "react-router-dom";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import ClearIcon from "@mui/icons-material/Clear";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -37,6 +39,7 @@ export default function Certificates() {
   const [open, setOpen] = useState(false);
   const [certs, setCerts] = useState(null);
   const [token, setToken] = useLocalStorage("token", null);
+  const navigate = useNavigate();
 
   const handleClose = () => {
     setOpen(false);
@@ -60,12 +63,18 @@ export default function Certificates() {
 
   const deleteCert = (id) => {
     async function removeCert() {
-      const { data } = await API.delete(`lawyers/me/category/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token.access}`,
-        },
-      });
-      setCerts((prevState) => prevState.filter((item) => item.id !== id));
+      try {
+        await API.delete(`lawyers/me/category/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token.access}`,
+          },
+        });
+        setCerts((prevState) => prevState.filter((item) => item.id !== id));
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response.status === 401) {
+          navigate("/auth/login");
+        }
+      }
     }
     removeCert();
   };
@@ -183,7 +192,7 @@ export default function Certificates() {
                 Add certification which proves your claims
               </Typography>
             )}
-            <Button>Add new certificate</Button>
+            <Button onClick={handleToggle}>Add new certificate</Button>
           </Box>
         </Box>
       </Grid>

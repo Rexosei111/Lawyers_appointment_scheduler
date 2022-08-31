@@ -7,6 +7,7 @@ import { API } from "../../lib/Axios_init";
 import Certificates from "./certificate";
 import Info from "./info";
 import Profile from "./profile";
+import Reviews from "./Reviews";
 import SocialMedia from "./socialMedia";
 import Testimonials from "./testimonials";
 
@@ -19,7 +20,7 @@ export default function Me() {
   useEffect(() => {
     async function fetchProfile() {
       if (token === null) {
-        navigate("/auth/login")
+        navigate("/auth/login");
       }
       setFetching(true);
       try {
@@ -76,9 +77,11 @@ export default function Me() {
               other_names={personalInfo.other_names}
               last_name={personalInfo.last_name}
               biography={personalInfo.biography}
+              categories={personalInfo.category_set}
             />
             <Testimonials />
             <Certificates />
+            <Reviews />
           </Grid>
         </Grid>
       ) : (

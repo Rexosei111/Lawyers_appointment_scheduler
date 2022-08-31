@@ -15,6 +15,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { API } from "../lib/Axios_init";
 import { truncateText } from "../utils";
+import AppointmentReview from "./profile/AddReview";
 import ResponsiveAppBar from "./TopNav";
 
 export default function Appointments() {
@@ -23,6 +24,9 @@ export default function Appointments() {
   const params = useParams();
   const navigate = useNavigate();
   const [error, setError] = useState(false);
+  const [addReview, setAddReview] = useState(false)
+  const [review, setReview] = useState(null)
+  const [rating, setRating]  = useState(0)
 
   const cancelAppointment = async () => {
     await API.delete(`appointments/${params.id}`);
@@ -35,6 +39,7 @@ export default function Appointments() {
       ...prevState,
       status: "Completed",
     }));
+    setAddReview(true)
   };
   useEffect(() => {
     async function viewAppointment() {
@@ -177,7 +182,7 @@ export default function Appointments() {
                         Cancel Appointment
                       </Button>
                     )}
-                    {new Date(appointment.booking_date) - new Date() <= 0 &&
+                    {addReview === true ? <AppointmentReview setAddReview={setAddReview}/> : new Date(appointment.booking_date) - new Date() <= 0 &&
                       appointment.status === "Accepted" && (
                         <Button
                           variant="outlined"

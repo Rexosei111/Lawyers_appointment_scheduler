@@ -1,13 +1,14 @@
+import email
 from functools import partial
 from http.client import ResponseNotReady
 from django.shortcuts import render
 from rest_framework import generics, filters
 from .utils import authenticate, decode_token, get_date, get_tokens_for_user
-from .serializers import AppointmentSerializer, BookingSerializer, CategorySerializer, GetTestimonialSerializer, LawyerSerializer, PersonalInfoSerializer, SocialLinkSerializer, TestimonialSerializer, UpdateLawyerSerializer, loginSerializer, profileSerializer
+from .serializers import AppointmentSerializer, BookingSerializer, CategorySerializer, GetBookingSerializer, GetTestimonialSerializer, LawyerSerializer, PersonalInfoSerializer, ReviewSerializer, SocialLinkSerializer, TestimonialSerializer, UpdateLawyerSerializer, loginSerializer, profileSerializer
 from rest_framework.decorators import api_view
 from django.contrib.auth.hashers import make_password, check_password
 from rest_framework.response import Response
-from .models import Bookings, Category, Lawyer, Profile, SocialLinks, Testimonial
+from .models import Bookings, Category, Lawyer, Profile, Reviews, SocialLinks, Testimonial
 from django.db.models import Q
 from django.core.mail import send_mail
 from .utils import ses_client, is_email_verified, verify_email
@@ -284,7 +285,7 @@ def get_bookingList(request):
 
     queryset = Bookings.objects.filter(
         lawyer__email=lawyer.email).order_by("-created_at")
-    serializer = BookingSerializer(queryset, many=True)
+    serializer = GetBookingSerializer(queryset, many=True)
     return Response(serializer.data)
 
 
@@ -425,4 +426,73 @@ def get_socialLinks(request, pk):
     except SocialLinks.DoesNotExist:
         return Response(status=404)
     serializer = SocialLinkSerializer(socialLinks, many=True)
+    return Response(serializer.data)
+
+
+@api_view(["Post", "GET"])
+def add_review(request, pk):
+    try:
+        appointment = Bookings.objects.get(pk=pk)
+    except Bookings.DoesNotExist:
+        return Response(status=404, data={"message": "Appointment with this id not found"})
+
+    try:
+        lawyer = Lawyer.objects.get(pk=appointment.lawyer.id)
+    except Lawyer.DoesNotExist:
+        return Response(status=404, data={"message": "Lawyer associated with this appointment not found"})
+    review = Reviews(lawyer=lawyer, appointment=appointment, name=appointment.name, email=appointment.email)
+    serializer = ReviewSerializer(review, data=request.data, partial=True)
+    if serializer.is_valid():
+        data = serializer.save()
+        try:
+           response = send_mail(
+               "New Review", f"{data.name} reviewed your appointment with him/her. Review Details: Rating: {data.rating} Review: {data.review}", "kyeisamuel931@gmail.com", [lawyer.email])
+        except Exception as msg:
+            print("Unable to send Mail", msg)
+        return Response(status=200)
+    return Response(status=400, data=serializer.data)
+
+
+@api_view(["GET", "DELETE"])
+def get_reviews(request):
+    lawyer_data = authenticate(request=request)
+    if (lawyer_data is None):
+        return Response(status=401, data={"message": "token has expired"})
+    try:
+        lawyer = Lawyer.objects.get(email=lawyer_data["email"])
+    except Lawyer.DoesNotExist:
+        return Response({"message": "Lawyer not found"}, status=404)
+    if request.method == "GET":
+        reviews = Reviews.objects.filter(
+            lawyer__pk=lawyer.id).order_by("-created")
+        total = request.query_params.get("total", None)
+        if (total is None):
+            reviews = reviews[:5]
+        elif (total == "all"):
+            reviews = reviews
+        else:
+            reviews = reviews[:int(total)]
+        serializer = ReviewSerializer(reviews, many=True)
+        return Response(serializer.data)
+    if request.method == "DELETE":
+        review_id = request.query_params.get("review_id")
+        try:
+            review = Reviews.objects.get(pk=int(review_id))
+        except Reviews.DoesNotExist:
+            return Response(status=404)
+        review.delete()
+        return Response(status=200)
+    
+@api_view(["GET"])
+def get_lawyer_reviews(request, pk):
+    reviews = Reviews.objects.filter(
+            lawyer__pk=pk).order_by("-created")
+    total = request.query_params.get("total", None)
+    if (total is None):
+        reviews = reviews[:5]
+    elif (total == "all"):
+        reviews = reviews
+    else:
+        reviews = reviews[:int(total)]
+    serializer = ReviewSerializer(reviews, many=True)
     return Response(serializer.data)

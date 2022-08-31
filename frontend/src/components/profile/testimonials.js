@@ -196,7 +196,7 @@ export default function Testimonials() {
                   Showcase your work with client outside of this platform.
                 </Typography>
               )}
-              <Button>Request a testimonial</Button>
+              <Button onClick={handleToggle}>Request a testimonial</Button>
             </Box>
           </Box>
           {/* <img src={testimonialBg} alt="" height={340} />

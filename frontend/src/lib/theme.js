@@ -5,9 +5,9 @@ export const theme = responsiveFontSizes(
   createTheme({
     palette: {
       mode: "light",
-      // primary: {
-      //   main: "#28c7f",
-      // },
+      primary: {
+        main: "#ff9800",
+      },
       background: {
         paper: "#fdfdfd",
         default: cyan,
