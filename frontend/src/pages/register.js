@@ -26,7 +26,7 @@ export default function Register() {
   const [skipped, setSkipped] = React.useState(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [ verified, setVerified] = useState(true)
+  const [verified, setVerified] = useState(true);
   const navigate = useNavigate();
 
   const isStepOptional = (step) => {
@@ -101,11 +101,13 @@ export default function Register() {
   ];
   return (
     <Container maxWidth="md">
-      {verified === false &&<Alert severity="info" sx={{ my: 2}}>
-        <AlertTitle>{"Email Verification"}</AlertTitle>
-        An email has been sent to your email address - <strong>Check it out!</strong>
-      </Alert>
-}
+      {verified === false && (
+        <Alert severity="info" sx={{ my: 2 }}>
+          <AlertTitle>{"Email Verification"}</AlertTitle>
+          An email has been sent to your email address -{" "}
+          <strong>Check it out!</strong>
+        </Alert>
+      )}
       <Box
         sx={{
           display: "flex",
@@ -149,10 +151,11 @@ export default function Register() {
           <Typography sx={{ mt: 2, mb: 1 }}>
             All steps completed - you&apos;re finished
           </Typography>
-          <Box sx={{ display: "flex", flexDirection: "row", pt: 2 }}>
+          {/* <Box sx={{ display: "flex", flexDirection: "row", pt: 2 }}>
             <Box sx={{ flex: "1 1 auto" }} />
             <Button onClick={handleReset}>Reset</Button>
-          </Box>
+          </Box> */}
+          {navigate("/auth/login")}
         </React.Fragment>
       ) : (
         <React.Fragment>
