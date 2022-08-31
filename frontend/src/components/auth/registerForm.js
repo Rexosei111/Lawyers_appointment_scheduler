@@ -48,13 +48,11 @@ const validate = (values) => {
   return errors;
 };
 
-function RegisterForm({ setLoading, error, setError, handleNext }) {
+function RegisterForm({ setLoading, error, setError, handleNext, setVerified }) {
   // const [loading, setLoading] = useState(false);
   // const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState({});
   const [success, setSuccess] = useState(null);
-  const large = useMediaQuery("(max-width:900px)");
-  const formRef = useRef();
 
   const [token, setToken] = useLocalStorage("token", null);
 
@@ -69,6 +67,7 @@ function RegisterForm({ setLoading, error, setError, handleNext }) {
         setLoading(false);
         setSuccess(true);
         setError(false);
+        setVerified(false)
         handleNext();
       } catch (error) {
         if (axios.isAxiosError(error) && error.response) {

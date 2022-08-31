@@ -1,16 +1,17 @@
+import email
 from functools import partial
 from http.client import ResponseNotReady
 from django.shortcuts import render
 from rest_framework import generics, filters
 from .utils import authenticate, decode_token, get_date, get_tokens_for_user
-from .serializers import AppointmentSerializer, BookingSerializer, CategorySerializer, GetTestimonialSerializer, LawyerSerializer, PersonalInfoSerializer, SocialLinkSerializer, TestimonialSerializer, UpdateLawyerSerializer, loginSerializer, profileSerializer
+from .serializers import AppointmentSerializer, BookingSerializer, CategorySerializer, GetBookingSerializer, GetTestimonialSerializer, LawyerSerializer, PersonalInfoSerializer, ReviewSerializer, SocialLinkSerializer, TestimonialSerializer, UpdateLawyerSerializer, loginSerializer, profileSerializer
 from rest_framework.decorators import api_view
 from django.contrib.auth.hashers import make_password, check_password
 from rest_framework.response import Response
-from .models import Bookings, Category, Lawyer, Profile, SocialLinks, Testimonial
+from .models import Bookings, Category, Lawyer, Profile, Reviews, SocialLinks, Testimonial
 from django.db.models import Q
 from django.core.mail import send_mail
-from .utils import ses_client, is_email_verified
+from .utils import ses_client, is_email_verified, verify_email
 # Create your views here.
 
 
@@ -24,7 +25,7 @@ def register(request):
         lawyer = serializer.save()
         response = ses_client.verify_email_address(EmailAddress=lawyer.email)
         token = get_tokens_for_user(lawyer)
-        return Response(status=200, data={"access": token})
+        return Response(status=200, data={"access": token, **serializer.data})
     return Response(serializer.errors, status=400)
 
 
@@ -120,14 +121,15 @@ def login(request):
         lawyer = Lawyer.objects.get(email=data["email"])
         password_checked = check_password(data["password"], lawyer.password)
         if password_checked:
-            if (is_email_verified()):
+            if (is_email_verified(lawyer.email, lawyer.email_verified)):
                 lawyer.email_verified = True
-                lawyer.save(updated_fields=["email_verified"])
+                lawyer.save(update_fields=["email_verified"])
                 token = get_tokens_for_user(lawyer)
                 serializer = PersonalInfoSerializer(lawyer)
                 return Response(status=200, data={"access": token, **serializer.data})
             else:
-                return Response(status=200, data={"message": "verify your email address"})
+                verify_email(lawyer.email)
+                return Response(status=403, data={"message": "verify your email address"})
         else:
             return Response(status=401, data={"message": "Invalid Credentials"})
     return Response(serializer.errors, status=400)
@@ -237,6 +239,18 @@ def get_lawyer_cert(request, email):
 
 
 @api_view(["POST"])
+def check_email(request):
+    email = request.query_params.get("email")
+    if not email:
+        return Response(status=400, data={"message": "email query parameter must be provide"})
+    if (is_email_verified(email, email_verified=False)):
+        return Response(status=200)
+    else:
+        verify_email(email=email)
+        return Response(status=201)
+
+
+@api_view(["POST"])
 def book_appointment(request, pk):
     try:
         lawyer = Lawyer.objects.get(pk=pk)
@@ -251,10 +265,10 @@ def book_appointment(request, pk):
     if serializer.is_valid():
         appointment = serializer.save()
         response = send_mail("New Appointment Booking",
-                             f"{booking.name} is booking an appointment with you. Click on the link to view full details of this appointment. http://localhost:3000/lawyers/me/bookingss", "kyeisamuel931@gmail.com", [lawyer.email])
-        response2 = send_mail("You Appointment",
-                              f"You booked an appointment with Attorney, {lawyer.first_name} {lawyer.last_name}. Click on this link to check the status of your appointment. http://localhost:3000/appointments/{appointment.id}")
-        print(response, response2)
+                             f"{booking.name} is booking an appointment with you. Click on the link to view full details of this appointment. http://localhost:3000/lawyers/me/bookings", "kyeisamuel931@gmail.com", [lawyer.email])
+        response2 = send_mail("Appointment Booked",
+                              f"You booked an appointment with Attorney, {lawyer.first_name} {lawyer.last_name}. Click on this link to check the status of your appointment. http://localhost:3000/appointments/{appointment.id}", "kyeisamuel931@gmail.com", [appointment.email])
+        print(response)
         return Response(status=200, data={"link": f"http://localhost:3000/appointments/{appointment.id}"})
     return Response(serializer.errors)
 
@@ -271,7 +285,7 @@ def get_bookingList(request):
 
     queryset = Bookings.objects.filter(
         lawyer__email=lawyer.email).order_by("-created_at")
-    serializer = BookingSerializer(queryset, many=True)
+    serializer = GetBookingSerializer(queryset, many=True)
     return Response(serializer.data)
 
 
@@ -308,11 +322,21 @@ def respond_to_booking(request, pk):
             booking.appointment_time = booking_time
             booking.save()
             bookingUpdate = Bookings.objects.get(pk=pk)
+            try:
+                response = send_mail(
+                    "Appointment Accepted", f"Your Appointment with Attorney {lawyer.first_name} {lawyer.last_name} has been confirmed. Appointment Details: Date: {bookingUpdate.booking_date} Time: {bookingUpdate.appointment_time} Note: {note}", "kyeisamuel931@gmail.com", [bookingUpdate.email])
+            except Exception as msg:
+                print("Unable to send Mail", msg)
             return Response(status=200, data={"time": bookingUpdate.appointment_time})
 
         if (request.data["accepted"] is False):
             booking.status = "Declined"
             booking.save()
+            try:
+                response = send_mail(
+                    "Appointment Declined", f"Unfortunately, Your Appointment with Attorney {lawyer.first_name} {lawyer.last_name} has been declined. Appointment Details: Date: {bookingUpdate.booking_date} Time: {bookingUpdate.appointment_time} Message from {lawyer.first_name} {lawyer.last_name}: {note}", "kyeisamuel931@gmail.com", [bookingUpdate.email])
+            except Exception as msg:
+                print("Unable to send Mail", msg)
             return Response(status=200)
 
     if request.method == "PATCH":
@@ -320,6 +344,11 @@ def respond_to_booking(request, pk):
             booking.status = "Declined"
             booking.appointment_time = None
             booking.save()
+            try:
+                response = send_mail(
+                    "Appointment Declined", f"Unfortunately, Your Appointment with Attorney {lawyer.first_name} {lawyer.last_name} has been declined. Appointment Details: Date: {bookingUpdate.booking_date} Time: {bookingUpdate.appointment_time} Message from {lawyer.first_name} {lawyer.last_name}: {note}", "kyeisamuel931@gmail.com", [bookingUpdate.email])
+            except Exception as msg:
+                print("Unable to send Mail", msg)
             return Response(status=200)
 
         booking_time = request.data["time"]
@@ -328,6 +357,11 @@ def respond_to_booking(request, pk):
         booking.appointment_time = booking_time
         booking.save()
         bookingUpdate = Bookings.objects.get(pk=pk)
+        try:
+            response = send_mail(
+                "Appointment Updated", f"Your Appointment with Attorney {lawyer.first_name} {lawyer.last_name} has been Updated. Appointment Details: Date: {bookingUpdate.booking_date} Time: {bookingUpdate.appointment_time} Message from {lawyer.first_name} {lawyer.last_name}: {note}", "kyeisamuel931@gmail.com", [bookingUpdate.email])
+        except Exception as msg:
+            print("Unable to send Mail", msg)
         return Response(status=200, data={"time": bookingUpdate.appointment_time})
 
 
@@ -392,4 +426,73 @@ def get_socialLinks(request, pk):
     except SocialLinks.DoesNotExist:
         return Response(status=404)
     serializer = SocialLinkSerializer(socialLinks, many=True)
+    return Response(serializer.data)
+
+
+@api_view(["Post", "GET"])
+def add_review(request, pk):
+    try:
+        appointment = Bookings.objects.get(pk=pk)
+    except Bookings.DoesNotExist:
+        return Response(status=404, data={"message": "Appointment with this id not found"})
+
+    try:
+        lawyer = Lawyer.objects.get(pk=appointment.lawyer.id)
+    except Lawyer.DoesNotExist:
+        return Response(status=404, data={"message": "Lawyer associated with this appointment not found"})
+    review = Reviews(lawyer=lawyer, appointment=appointment, name=appointment.name, email=appointment.email)
+    serializer = ReviewSerializer(review, data=request.data, partial=True)
+    if serializer.is_valid():
+        data = serializer.save()
+        try:
+           response = send_mail(
+               "New Review", f"{data.name} reviewed your appointment with him/her. Review Details: Rating: {data.rating} Review: {data.review}", "kyeisamuel931@gmail.com", [lawyer.email])
+        except Exception as msg:
+            print("Unable to send Mail", msg)
+        return Response(status=200)
+    return Response(status=400, data=serializer.data)
+
+
+@api_view(["GET", "DELETE"])
+def get_reviews(request):
+    lawyer_data = authenticate(request=request)
+    if (lawyer_data is None):
+        return Response(status=401, data={"message": "token has expired"})
+    try:
+        lawyer = Lawyer.objects.get(email=lawyer_data["email"])
+    except Lawyer.DoesNotExist:
+        return Response({"message": "Lawyer not found"}, status=404)
+    if request.method == "GET":
+        reviews = Reviews.objects.filter(
+            lawyer__pk=lawyer.id).order_by("-created")
+        total = request.query_params.get("total", None)
+        if (total is None):
+            reviews = reviews[:5]
+        elif (total == "all"):
+            reviews = reviews
+        else:
+            reviews = reviews[:int(total)]
+        serializer = ReviewSerializer(reviews, many=True)
+        return Response(serializer.data)
+    if request.method == "DELETE":
+        review_id = request.query_params.get("review_id")
+        try:
+            review = Reviews.objects.get(pk=int(review_id))
+        except Reviews.DoesNotExist:
+            return Response(status=404)
+        review.delete()
+        return Response(status=200)
+    
+@api_view(["GET"])
+def get_lawyer_reviews(request, pk):
+    reviews = Reviews.objects.filter(
+            lawyer__pk=pk).order_by("-created")
+    total = request.query_params.get("total", None)
+    if (total is None):
+        reviews = reviews[:5]
+    elif (total == "all"):
+        reviews = reviews
+    else:
+        reviews = reviews[:int(total)]
+    serializer = ReviewSerializer(reviews, many=True)
     return Response(serializer.data)

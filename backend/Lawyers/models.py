@@ -5,8 +5,10 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 GENDERS = (("MALE", "Male"), ("FEMALE", "Female"))
 
+
 class Lawyer(models.Model):
-    email = models.EmailField(verbose_name="Email", max_length=254, unique=True)
+    email = models.EmailField(verbose_name="Email",
+                              max_length=254, unique=True)
     email_verified = models.BooleanField(default=False, editable=False)
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
@@ -17,38 +19,42 @@ class Lawyer(models.Model):
     picture = models.URLField(blank=True, null=True)
     biography = models.TextField(null=True, blank=True)
     location = models.CharField(null=True, blank=True, max_length=50)
-    
-    
+
     def type_of_lawyer(self):
-        category = Category.objects.filter(lawyer__email=self.email, verified=True).first()
+        category = Category.objects.filter(
+            lawyer__email=self.email, verified=True).first()
         return category
-    
+
     def __str__(self):
         return self.email
-    
+
+
 LINKS = (
     ("Facebook", "Facebook"),
     ("Twitter", "Twitter"),
     ("Instagram", "Instagram"),
     ("LinkedIn", "LinkedIn")
 )
+
+
 class SocialLinks(models.Model):
     lawyer = models.ForeignKey(Lawyer, on_delete=models.CASCADE)
     link = models.URLField()
     name = models.CharField(max_length=20, choices=LINKS)
-    
+
     def __str__(self):
         return self.name
-    
+
 
 class Profile(models.Model):
-    lawyer = models.OneToOneField(Lawyer, to_field="email", limit_choices_to={"email_verified": True}, on_delete=models.CASCADE)
+    lawyer = models.OneToOneField(Lawyer, to_field="email", limit_choices_to={
+                                  "email_verified": True}, on_delete=models.CASCADE)
     title = models.CharField(max_length=200, blank=True, null=True)
     Biography = models.TextField(null=True, blank=True)
-    
+
     def __str__(self):
         return self.lawyer.email
-    
+
 
 types_of_lawyers = (
     ("Bankruptcy", "Bankruptcy"),
@@ -65,19 +71,22 @@ types_of_lawyers = (
     ("Tax", "Tax")
 )
 
+
 class Category(models.Model):
-    lawyer = models.ForeignKey(Lawyer, on_delete=models.CASCADE, to_field="email")
-    type_of_lawyer = models.CharField(max_length=50, choices=types_of_lawyers, verbose_name="type_of_lawyer")
+    lawyer = models.ForeignKey(
+        Lawyer, on_delete=models.CASCADE, to_field="email")
+    type_of_lawyer = models.CharField(
+        max_length=50, choices=types_of_lawyers, verbose_name="type_of_lawyer")
     certificate = models.URLField()
     years_of_experience = models.PositiveIntegerField(null=True, blank=True)
     verified = models.BooleanField(default=False, null=True)
-    
+
     class Meta:
         verbose_name_plural = "types"
-        
+
     def __str__(self):
         return f"{self.type_of_lawyer}"
-    
+
 
 class Testimonial(models.Model):
     lawyer = models.ForeignKey(Lawyer, on_delete=models.CASCADE)
@@ -89,10 +98,10 @@ class Testimonial(models.Model):
     testimony = models.TextField(blank=True, null=True)
     date_created = models.DateField(auto_now_add=True)
     replied = models.BooleanField(default=False)
-    
+
     def __str__(self):
         return self.name
-    
+
 
 STATUS = [
     ("Pending", "Pending"),
@@ -100,6 +109,8 @@ STATUS = [
     ("Declined", "Declined"),
     ("Completed", "Completed")
 ]
+
+
 class Bookings(models.Model):
     lawyer = models.ForeignKey(Lawyer, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
@@ -111,8 +122,20 @@ class Bookings(models.Model):
     description = models.TextField(blank=True, null=True)
     created_at = models.DateField(auto_now_add=True)
     status = models.CharField(max_length=10, choices=STATUS, default="Pending")
-    
+
     def __str__(self):
         return self.name
-    
-    
+
+
+class Reviews(models.Model):
+    lawyer = models.ForeignKey(Lawyer, on_delete=models.CASCADE)
+    appointment = models.ForeignKey(
+        Bookings, null=True, blank=True, on_delete=models.SET_NULL)
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    rating = models.PositiveIntegerField(null=True, blank=True)
+    review = models.TextField()
+    created = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name

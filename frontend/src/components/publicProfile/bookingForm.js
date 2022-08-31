@@ -50,7 +50,7 @@ const validate = (values) => {
   return errors;
 };
 
-function BookingForm({ handleClose }) {
+function BookingForm({ handleClose, email }) {
   const [formloading, setFormLoading] = useState(false);
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState({});
@@ -60,6 +60,7 @@ function BookingForm({ handleClose }) {
   const [link, setLink] = useState(null);
 
   const small = useMediaQuery("(max-width:500px)");
+  initialValues.email = email
   const formik = useFormik({
     initialValues,
     onSubmit: async (values) => {

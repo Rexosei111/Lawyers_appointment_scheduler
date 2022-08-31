@@ -13,6 +13,8 @@ import Register from "./pages/register";
 import "./App.css";
 import Appointments from "./components/Appointments";
 import Logout from "./pages/logout";
+import Reviews from "./components/profile/Reviews";
+import ReviewMore from "./components/profile/ReviewMore";
 
 function App() {
   return (
@@ -34,6 +36,7 @@ function App() {
       <Route path="/lawyers/me" element={<ProfileLayout />}>
         <Route index element={<Me />} />
         <Route path="bookings" element={<Bookings />} />
+        <Route path="reviews" element={<ReviewMore />} />
       </Route>
     </Routes>
   );
