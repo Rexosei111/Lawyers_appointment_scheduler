@@ -19,7 +19,8 @@ import { API } from "../lib/Axios_init";
 const pages = [
   { name: "Home", value: "/" },
   { name: "Bookings", value: "/lawyers/me/bookings" },
-  {name: "Reviews", value: "/lawyers/me/reviews"}
+  { name: "Reviews", value: "/lawyers/me/reviews" },
+  { name: "Files", value: "/lawyers/me/files" },
 ];
 const settings = [{ name: "Profile", value: "/lawyers/me" }];
 

@@ -1,4 +1,6 @@
 import {
+  Box,
+  Button,
   InputAdornment,
   MenuItem,
   Paper,
@@ -17,6 +19,9 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SaveIcon from "@mui/icons-material/Save";
+import AfterUpload from "../AfterUpload";
+import Uploading from "../uploading";
+import DropArea from "../DropArea";
 
 const validate = (values) => {
   let errors = {};
@@ -39,7 +44,11 @@ export default function UpdateInfo({
   const [formloading, setFormLoading] = useState(false);
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState({});
+  const [status, setstatus] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [open, setOpen] = useState(false);
+  const [message, setmessage] = useState();
+
   const large = useMediaQuery("(max-width:900px)");
   const formRef = useRef();
   const [File, setFile] = useState(null);
@@ -58,6 +67,9 @@ export default function UpdateInfo({
   const navigate = useNavigate();
   const small = useMediaQuery("(max-width:500px)");
 
+  const handleChange = (e) => {
+    setFile(e.target.files[0]);
+  };
   const formik = useFormik({
     initialValues,
     onSubmit: async (values) => {
@@ -244,6 +256,52 @@ export default function UpdateInfo({
             }}
             fullWidth
           />
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+          <Typography variant="caption" color={"GrayText"}>
+            Profile Picture
+          </Typography>
+          {status === "done" && (
+            <AfterUpload
+              link={Link}
+              setLink={setLink}
+              setFile={setFile}
+              setstatus={setstatus}
+            />
+          )}
+          {status === "uploading" && (
+            <Uploading File={File} setLink={setLink} setstatus={setstatus} />
+          )}
+          {status === null && (
+            <Box>
+              <DropArea
+                setFile={setFile}
+                setOpen={setOpen}
+                open={open}
+                message={message}
+                setmessage={setmessage}
+              />
+              <input
+                type="file"
+                accept="image/*"
+                id="image"
+                name="image"
+                style={{ display: "none" }}
+                onChange={handleChange}
+              />
+              <label htmlFor="image">
+                <Button
+                  variant="contained"
+                  color="primary"
+                  component="span"
+                  disableElevation
+                  sx={{ my: 1 }}
+                >
+                  Choose a file
+                </Button>
+              </label>
+            </Box>
+          )}
         </div>
         <LoadingButton
           variant="contained"
