@@ -4,14 +4,15 @@ from http.client import ResponseNotReady
 from django.shortcuts import render
 from rest_framework import generics, filters
 from .utils import authenticate, decode_token, get_date, get_tokens_for_user
-from .serializers import AppointmentSerializer, BookingSerializer, CategorySerializer, GetBookingSerializer, GetTestimonialSerializer, LawyerSerializer, PersonalInfoSerializer, ReviewSerializer, SocialLinkSerializer, TestimonialSerializer, UpdateLawyerSerializer, loginSerializer, profileSerializer
+from .serializers import AppointmentSerializer, BookingSerializer, CategorySerializer, GetBookingSerializer, GetTestimonialSerializer, LawyerSerializer, PersonalInfoSerializer, ReviewSerializer, SocialLinkSerializer, TestimonialSerializer, UpdateLawyerSerializer, loginSerializer, profileSerializer, FileSerializer
 from rest_framework.decorators import api_view
 from django.contrib.auth.hashers import make_password, check_password
 from rest_framework.response import Response
-from .models import Bookings, Category, Lawyer, Profile, Reviews, SocialLinks, Testimonial
+from .models import Bookings, Category, Lawyer, Profile, Reviews, SocialLinks, Testimonial, types_of_lawyers, File
 from django.db.models import Q
 from django.core.mail import send_mail
 from .utils import ses_client, is_email_verified, verify_email
+
 # Create your views here.
 
 
@@ -496,3 +497,45 @@ def get_lawyer_reviews(request, pk):
         reviews = reviews[:int(total)]
     serializer = ReviewSerializer(reviews, many=True)
     return Response(serializer.data)
+
+@api_view(["GET"])
+def get_summary(request):
+    lawyers = ["Business", "Bankruptcy", "Family", "Entertainment"]
+    summary = {}
+    for info in lawyers:
+        summary[info] = Lawyer.objects.filter(category__type_of_lawyer=info, category__verified=True).count()
+    return Response(status=200, data=summary)
+
+@api_view(["GET", "POST", "DELETE"])
+def handle_files(request):
+    lawyer_data = authenticate(request=request)
+    if (lawyer_data is None):
+        return Response(status=401, data={"message": "token has expired"})
+    try:
+        lawyer = Lawyer.objects.get(email=lawyer_data["email"])
+    except Lawyer.DoesNotExist:
+        return Response({"message": "Lawyer not found"}, status=404)
+    if request.method == "POST":
+        file = File(lawyer=lawyer)
+        serializer = FileSerializer(file, data=request.data, partial=True)
+        if(serializer.is_valid()):
+            data = serializer.save()
+            print(data)
+            return Response(status=200, data=serializer.data)
+        return Response(serializer.errors)
+
+    if request.method == "GET":
+        files = File.objects.filter(lawyer__email=lawyer.email)
+        serializer = FileSerializer(files, many=True)
+        return Response(serializer.data)
+
+    if request.method == "DELETE":
+        file_id = request.query_params.get("file_id", None)
+        if file_id is None:
+            return Response(status=400, data={"message": "file_id query parameter must be provided"})
+        try:
+            file = File.objects.get(pk=file_id)
+        except File.DoesNotExist:
+            return Response(status=404)
+        file.delete()
+        return Response(status=200)

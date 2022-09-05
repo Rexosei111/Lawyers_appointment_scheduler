@@ -15,6 +15,7 @@ import Appointments from "./components/Appointments";
 import Logout from "./pages/logout";
 import Reviews from "./components/profile/Reviews";
 import ReviewMore from "./components/profile/ReviewMore";
+import File from "./components/profile/File";
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
         <Route index element={<Me />} />
         <Route path="bookings" element={<Bookings />} />
         <Route path="reviews" element={<ReviewMore />} />
+        <Route path="files" element={<File />} />
       </Route>
     </Routes>
   );

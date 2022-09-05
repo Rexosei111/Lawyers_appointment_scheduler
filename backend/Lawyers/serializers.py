@@ -1,5 +1,5 @@
 from dataclasses import fields
-from .models import Bookings, Category, Lawyer, Profile, Reviews, SocialLinks, Testimonial
+from .models import Bookings, Category, File, Lawyer, Profile, Reviews, SocialLinks, Testimonial
 from rest_framework import serializers
 
 
@@ -81,4 +81,9 @@ class SocialLinkSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reviews
+        fields = "__all__"
+
+class FileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = File
         fields = "__all__"
